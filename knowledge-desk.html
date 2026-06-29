@@ -1,0 +1,2367 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OD KnowledgeDesk</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='3' y='3' width='58' height='58' rx='13' fill='%23ffffff' stroke='%23dbe2ea' stroke-width='2'/><text x='32' y='34' font-family='Arial,sans-serif' font-size='30' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='%232E5E8C'>OD</text></svg>">
+
+<style>
+  :root{
+    --list-ratio:0.27;
+    --list-ratio-v:0.4;
+    --ink:#16233D;
+    --slate:#1B2536;
+    --mist:#F1F4F8;
+    --paper:#FFFFFF;
+    --line:#DCE2EA;
+    --line2:#E9EDF3;
+    --text:#1A2331;
+    --muted:#5A6675;
+    --faint:#8893A2;
+    --amber:#3B6FA8;
+    --amber-soft:#E5ECF5;
+    --amber-deep:#24507F;
+    --teal:#2F6AA6;
+    --green:#2E7D5B;
+    --red:#C0463B;
+    --star-empty:#CAD3DE;
+    --shadow:0 1px 2px rgba(22,35,61,.06), 0 8px 28px rgba(22,35,61,.08);
+    --shadow-lg:0 18px 50px rgba(22,35,61,.24);
+    --r:12px;
+    --font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --display:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Mono","Consolas","SF Mono","Roboto Mono",monospace;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:var(--font);
+    color:var(--text);
+    background:var(--mist);
+    -webkit-font-smoothing:antialiased;
+    font-size:14px;
+    line-height:1.5;
+  }
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  input,textarea,select{font-family:inherit;font-size:14px;color:var(--text)}
+  ::selection{background:var(--amber-soft)}
+
+  .app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+
+  /* Header */
+  .topbar{
+    display:flex;align-items:center;gap:14px;
+    padding:0 18px;height:60px;flex:0 0 auto;
+    background:var(--ink);color:#EDF0F4;border-bottom:1px solid #000;
+  }
+  .brand{display:flex;align-items:center;gap:11px;flex:0 0 auto;user-select:none}
+  .glyph{
+    width:34px;height:34px;border-radius:9px;flex:0 0 auto;
+    background:#fff;
+    display:grid;place-items:center;
+    box-shadow:inset 0 0 0 1px rgba(22,35,61,.10), 0 1px 2px rgba(0,0,0,.18);
+  }
+  .glyph .od{font-family:var(--display);font-weight:800;font-size:13.5px;letter-spacing:.4px;color:#2E5E8C;line-height:1}
+  .glyph svg{width:19px;height:19px}
+  .brand b{font-family:var(--display);font-weight:700;font-size:16.5px;letter-spacing:-.2px;color:#fff;display:block}
+  .brand .sub{font-size:11px;color:#9aa6b4;letter-spacing:.2px;display:flex;align-items:center;gap:6px;margin-top:-1px}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:#5a6573}
+  .live-dot.file{background:#46b97e}
+  .live-dot.browser{background:var(--amber)}
+  .live-dot.memory{background:#c0463b}
+  button.sub{background:none;border:none;padding:0;margin:0;cursor:pointer;font:inherit;color:inherit;display:inline-flex;align-items:center;gap:6px;border-radius:6px}
+  button.sub:hover{text-decoration:underline}
+  button.sub.warn{color:#e0a23c;font-weight:600}
+  .sub-line{display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .sub-sep{color:#5a6573;font-size:11px}
+
+  .search-wrap{flex:1 1 auto;max-width:560px;margin:0 auto;position:relative}
+  .search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#8090a8}
+  #search{
+    width:100%;height:38px;border-radius:10px;border:1px solid #2c3c58;
+    background:#101B30;color:#eef2f8;padding:0 70px 0 38px;outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  #search::placeholder{color:#75839b}
+  #search:focus{border-color:#5C8FCB;box-shadow:0 0 0 3px rgba(92,143,203,.25)}
+  .kbd{
+    position:absolute;right:9px;top:50%;transform:translateY(-50%);
+    font-family:var(--mono);font-size:11px;color:#8a96ad;
+    border:1px solid #35455f;border-radius:6px;padding:2px 7px;background:#152138;
+  }
+  .search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:6px;display:none;align-items:center;justify-content:center;color:#8090a8;background:none;cursor:pointer}
+  .search-clear svg{width:14px;height:14px}
+  .search-clear:hover{color:#fff;background:#223251}
+  .search-wrap.has-text .kbd{display:none}
+  .search-wrap.has-text .search-clear{display:flex}
+
+  .top-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+  .icon-btn{
+    width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+    color:#c4cedd;border:1px solid #2c3c58;background:#19263F;transition:.15s;position:relative;
+  }
+  .icon-btn:hover{background:#223251;color:#fff}
+  .icon-btn svg{width:18px;height:18px}
+  .btn-new{
+    height:38px;border-radius:10px;padding:0 15px;display:flex;align-items:center;gap:7px;
+    background:var(--amber);color:#fff;font-weight:600;font-size:13.5px;transition:.15s;
+    box-shadow:0 1px 0 rgba(255,255,255,.18) inset;
+  }
+  .btn-new:hover{background:#467cb5}
+  .btn-new svg{width:16px;height:16px}
+  .edit-badge{height:38px;border-radius:10px;padding:0 12px;display:none;align-items:center;gap:6px;font-size:12.5px;font-weight:600;border:1px solid #2c3c58;background:#19263F;color:#9aa6b4;cursor:default;flex:0 0 auto}
+  .edit-badge svg{width:15px;height:15px}
+  .edit-badge.ro{color:#9aa6b4}
+
+  /* Body layout */
+  .body{display:flex;flex:1 1 auto;min-height:0}
+
+  .list-pane{width:clamp(260px, calc(var(--list-ratio) * 100vw), calc(100vw - 380px));flex:0 0 auto;border-right:1px solid var(--line);background:var(--paper);display:flex;flex-direction:column;min-height:0}
+  .resizer{flex:0 0 7px;width:7px;margin:0 -3px;position:relative;z-index:6;cursor:col-resize;touch-action:none}
+  .resizer::after{content:"";position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:2px;border-radius:2px;background:transparent;transition:background .12s}
+  .resizer:hover::after{background:var(--amber)}
+  body.resizing .resizer::after{background:var(--amber)}
+  body.resizing{cursor:col-resize;user-select:none}
+  body.resizing .list,body.resizing .reader{pointer-events:none}
+
+  /* Stacked layout: list on top, reader on the bottom (desktop/tablet only) */
+  @media(min-width:681px){
+    .app.layout-rows .body{flex-direction:column}
+    .app.layout-rows .list-pane{width:auto;flex:0 0 clamp(150px, calc(var(--list-ratio-v) * 100%), calc(100% - 280px));border-right:none;border-bottom:1px solid var(--line)}
+    .app.layout-rows .resizer{width:auto;height:7px;flex:0 0 7px;margin:-3px 0;cursor:row-resize}
+    .app.layout-rows .resizer::after{top:50%;bottom:auto;left:0;right:0;transform:translateY(-50%);width:auto;height:2px}
+  }
+  body.resizing.res-rows{cursor:row-resize}
+
+  .list-head{padding:13px 16px 11px;border-bottom:1px solid var(--line2);flex:0 0 auto}
+  .filters-bar{position:relative}
+  .filters-bar::before,.filters-bar::after{content:"";position:absolute;top:0;bottom:4px;width:28px;z-index:2;pointer-events:none;opacity:0;transition:opacity .15s}
+  .filters-bar::before{left:0;background:linear-gradient(90deg,var(--paper),rgba(255,255,255,0))}
+  .filters-bar::after{right:0;background:linear-gradient(270deg,var(--paper),rgba(255,255,255,0))}
+  .filters-bar.more-left::before{opacity:1}
+  .filters-bar.more-right::after{opacity:1}
+  .filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;scroll-behavior:smooth}
+  .filters::-webkit-scrollbar{display:none}
+  .fil-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:26px;height:26px;border-radius:50%;display:none;align-items:center;justify-content:center;background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);color:var(--muted);cursor:pointer;transition:.13s}
+  .fil-arrow svg{width:15px;height:15px}
+  .fil-arrow.show{display:flex}
+  .fil-arrow:hover{color:var(--text);border-color:#c2cdda}
+  .fil-arrow.left{left:-3px}
+  .fil-arrow.right{right:-3px}
+  .chip{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:500;color:var(--muted);background:var(--paper);white-space:nowrap;transition:.12s}
+  .chip:hover{border-color:#cfd6de;color:var(--text)}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chip .ct{opacity:.55;margin-left:5px;font-variant-numeric:tabular-nums}
+
+  .list-sub{display:flex;align-items:center;justify-content:space-between;margin-top:11px}
+  .count{font-size:12px;color:var(--faint);font-weight:500}
+  .sort{position:relative}
+  .sort select{-webkit-appearance:none;appearance:none;border:1px solid var(--line);border-radius:8px;background:var(--paper);padding:5px 26px 5px 10px;font-size:12.5px;color:var(--muted);font-weight:500;cursor:pointer}
+  .sort svg{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--faint);pointer-events:none}
+
+  .list{overflow-y:auto;flex:1 1 auto;min-height:0}
+  .card{padding:13px 16px;border-bottom:1px solid var(--line2);cursor:pointer;transition:background .12s;position:relative}
+  .card:hover{background:#fafbfc}
+  .card.active{background:var(--amber-soft)}
+  .card.active::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--amber)}
+  .card-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .kbid{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--amber-deep);letter-spacing:.2px}
+  .cat-tag{font-size:11px;color:var(--muted);background:var(--line2);border-radius:5px;padding:1px 7px;font-weight:500}
+  .card h3{margin:0 0 4px;font-size:14.5px;font-weight:600;line-height:1.35;color:var(--text)}
+  .snippet{font-size:12.5px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .card-foot{display:flex;align-items:center;gap:12px;margin-top:8px;font-size:11px;color:var(--faint)}
+  .card-foot .cited{display:flex;align-items:center;gap:4px;color:var(--green);font-weight:500}
+  .card-foot svg{width:12px;height:12px}
+  .card-foot .dot2{width:3px;height:3px;border-radius:50%;background:var(--line);flex:0 0 auto}
+  .card-fav{margin-left:auto;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:var(--faint);background:none;flex:0 0 auto;transition:.12s}
+  .card-fav svg{width:15px;height:15px}
+  .card-fav:hover{color:var(--amber);background:var(--amber-soft)}
+  .card-fav.on{color:var(--amber)}
+  .act.fav.on{color:var(--amber);border-color:var(--amber);background:var(--amber-soft)}
+  .chip.fav-chip{display:inline-flex;align-items:center;gap:5px}
+  .chip.fav-chip svg{width:13px;height:13px}
+  .chip.fav-chip.on{background:var(--amber);border-color:var(--amber);color:#fff}
+  .card-foot .rt{display:flex;align-items:center;gap:5px}
+  .card-foot .rt .num{color:var(--text);font-weight:600}
+  .card-foot .rt .rcount{color:var(--faint)}
+  .card-foot .rt.unrated{color:var(--faint)}
+
+  /* Stars */
+  .stars{position:relative;display:inline-block;line-height:1;white-space:nowrap;font-family:Arial,"Segoe UI Symbol",sans-serif}
+  .stars .s-base{color:var(--star-empty)}
+  .stars .s-fill{position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap;color:var(--amber)}
+  .rate{display:inline-flex;gap:1px}
+  .rate button{font-size:21px;line-height:1;color:var(--star-empty);background:none;padding:0 1px;transition:color .08s;font-family:Arial,"Segoe UI Symbol",sans-serif}
+  .rate button:hover,.rate button.on{color:var(--amber)}
+
+  .rating-panel{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 22px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px;box-shadow:var(--shadow);margin-bottom:22px}
+  .rp-left{display:flex;align-items:center;gap:13px}
+  .rp-score{font-family:var(--display);font-size:24px;font-weight:700;color:var(--ink);line-height:1.05}
+  .rp-sub{font-size:12px;color:var(--muted);margin-top:1px}
+  .rp-right{display:flex;align-items:center;gap:11px}
+  .rp-right .lbl{font-size:12.5px;color:var(--muted);font-weight:600}
+  .rp-clear{font-size:12px;color:var(--muted);text-decoration:underline;text-underline-offset:2px;background:none}
+  .rp-clear:hover{color:var(--red)}
+  mark{background:var(--amber-soft);color:var(--amber-deep);border-radius:3px;padding:0 1px}
+
+  /* Reader */
+  .reader{flex:1 1 auto;min-width:0;overflow-y:auto;background:var(--mist)}
+  .reader-inner{max-width:min(1180px, 94%);margin:0 auto;padding:30px 40px 80px}
+  .r-id{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--amber-deep);letter-spacing:.3px}
+  .r-title{font-family:var(--display);font-size:27px;font-weight:700;letter-spacing:-.5px;line-height:1.2;margin:7px 0 14px;color:var(--ink)}
+  .r-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:12.5px;color:var(--muted);padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  .r-meta .dot{width:3px;height:3px;border-radius:50%;background:var(--faint)}
+  .r-meta b{color:var(--text);font-weight:600}
+  .r-cat{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 9px;font-weight:500;color:var(--text)}
+  .r-tags{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 0}
+
+  /* File attachments */
+  .attach-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+  .attach-row{display:flex;align-items:center;gap:8px;background:var(--mist);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px}
+  .attach-row .a-icon{flex:0 0 auto;color:var(--amber-deep)}
+  .attach-row .a-icon svg{width:16px;height:16px}
+  .attach-row .a-name{flex:1 1 auto;font-weight:600;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .attach-row .a-path{flex:2 1 0;font-size:11.5px;color:var(--faint);font-family:var(--mono);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .attach-row .a-del{flex:0 0 auto;width:22px;height:22px;border-radius:5px;display:grid;place-items:center;color:var(--faint);background:none;cursor:pointer}
+  .attach-row .a-del:hover{background:#fee;color:#b33}
+  .attach-row .a-del svg{width:13px;height:13px}
+  .attach-drop{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;margin-bottom:8px;border:2px dashed var(--line);border-radius:10px;color:var(--faint);font-size:13px;font-weight:600;cursor:default;transition:.12s;background:var(--mist)}
+  .attach-drop svg{width:20px;height:20px;flex:0 0 auto}
+  .attach-drop.drag{border-color:var(--amber);background:var(--amber-soft);color:var(--amber-deep)}
+  .attach-add{display:flex;gap:8px;flex-wrap:wrap}
+  .attach-add input{flex:1 1 160px;min-width:0}
+  .attach-add #fAttachName{flex:0 1 160px}
+
+  /* Reader attachment panel */
+  .attach-panel{margin:24px 0 0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .attach-panel-head{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--mist);border-bottom:1px solid var(--line);font-weight:700;font-size:13px;color:var(--text)}
+  .attach-panel-head svg{width:15px;height:15px;color:var(--amber-deep)}
+  .attach-link{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line2);color:var(--text)}
+  .attach-link:last-child{border-bottom:none}
+  .attach-link .al-icon{flex:0 0 auto;color:var(--amber-deep)}
+  .attach-link .al-icon svg{width:17px;height:17px}
+  .attach-link .al-name{flex:1 1 auto;font-weight:600;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .attach-link .al-path{flex:2 1 0;font-size:11.5px;color:var(--faint);font-family:var(--mono);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+  .attach-link .al-btns{flex:0 0 auto;display:flex;gap:5px;margin-left:8px}
+  .al-btn{height:28px;padding:0 10px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;border:1px solid var(--line);background:var(--paper);color:var(--text);display:flex;align-items:center;gap:4px}
+  .al-btn:hover{background:var(--amber-soft);border-color:var(--amber)}
+  .al-btn.primary{background:var(--amber);border-color:var(--amber);color:#fff}
+  .al-btn.primary:hover{filter:brightness(.96)}
+  .al-btn svg{width:13px;height:13px}
+  .r-tags .t{font-size:11.5px;color:var(--teal);background:var(--amber-soft);border-radius:6px;padding:3px 9px;font-weight:500}
+
+  .r-sticky{position:sticky;top:0;z-index:5;background:var(--mist);padding:14px 0 12px;margin:8px 0 14px}
+  .r-sticky::after{content:"";position:absolute;left:0;right:0;bottom:-12px;height:12px;background:linear-gradient(var(--mist),rgba(245,246,248,0));pointer-events:none}
+  .r-actions{display:flex;flex-wrap:wrap;gap:9px}
+  .act{height:38px;border-radius:9px;padding:0 14px;display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--paper);color:var(--text);box-shadow:var(--shadow);transition:.13s}
+  .act:hover{border-color:#cfd6de;transform:translateY(-1px)}
+  .act svg{width:15px;height:15px}
+  .act.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .act.primary:hover{background:#1d2630}
+  .act.cite{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .act.cite:hover{background:#467cb5}
+  .act.ghost{box-shadow:none;background:transparent}
+  .act.danger{color:var(--red);box-shadow:none;background:transparent;margin-left:auto}
+  .act.danger:hover{background:#fcf0ef;border-color:#f0cfcc}
+
+  /* Shared article content styling (reader + editor) */
+  .prose{font-size:15px;line-height:1.72;color:#283039;word-break:break-word}
+  .prose h2{font-family:var(--display);font-size:19px;font-weight:700;color:var(--ink);margin:22px 0 8px;letter-spacing:-.2px}
+  .prose h3{font-family:var(--display);font-size:16px;font-weight:600;color:var(--ink);margin:18px 0 6px}
+  .prose p{margin:0 0 12px}
+  .prose ul,.prose ol{margin:0 0 12px;padding-left:24px}
+  .prose li{margin:3px 0}
+  .prose a{color:var(--teal);text-decoration:underline;text-underline-offset:2px}
+  .prose a.kb-link{color:var(--blue-deep,#24507F);background:var(--amber-soft);border-radius:6px;padding:1px 8px 1px 7px;text-decoration:none;font-weight:600;white-space:nowrap}
+  .prose a.kb-link::before{content:"\00A7\00A0";opacity:.6;font-weight:700}
+  .prose a.kb-link:hover{filter:brightness(.96);text-decoration:none}
+  .article-body a.kb-link{cursor:pointer}
+  .back-prev{display:inline-flex;align-items:center;gap:5px;max-width:100%;font-size:12.5px;font-weight:600;color:var(--amber-deep);background:var(--amber-soft);border-radius:8px;padding:6px 12px 6px 9px;margin-bottom:10px;cursor:pointer;text-decoration:none;border:1px solid transparent}
+  .back-prev:hover{filter:brightness(.97);border-color:var(--amber)}
+  .back-prev svg{width:14px;height:14px;flex:0 0 auto}
+  .back-prev .bp-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .picker-list{max-height:46vh;overflow-y:auto;border:1px solid var(--line2);border-radius:10px}
+  .picker-item{display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px solid var(--line2);cursor:pointer;transition:background .1s}
+  .picker-item:last-child{border-bottom:none}
+  .picker-item:hover{background:var(--amber-soft)}
+  .picker-item .pk-id{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--amber-deep);flex:0 0 auto}
+  .picker-item .pk-title{font-weight:500;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .picker-item .pk-cat{font-size:11px;color:var(--muted);background:var(--line2);border-radius:5px;padding:1px 7px;flex:0 0 auto}
+  .picker-empty{padding:22px;text-align:center;color:var(--faint);font-size:13px}
+  .prose blockquote{margin:0 0 12px;padding:6px 14px;border-left:3px solid var(--amber);background:var(--amber-soft);border-radius:0 8px 8px 0;color:#2A4A6E}
+  .prose pre{margin:0 0 12px;padding:12px 14px;background:var(--slate);color:#e6ebf1;border-radius:9px;font-family:var(--mono);font-size:13px;line-height:1.55;white-space:pre-wrap;overflow-x:auto}
+  .prose code{font-family:var(--mono);font-size:.9em;background:var(--line2);padding:1px 5px;border-radius:5px}
+  .prose pre code{background:none;padding:0}
+  .prose table{border-collapse:collapse;margin:12px 0;font-size:13.5px;line-height:1.45;max-width:100%}
+  .prose th,.prose td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+  .prose th{background:var(--line2);font-weight:600;color:var(--text)}
+  .prose tr:nth-child(even) td{background:rgba(127,140,160,.06)}
+  .prose caption{font-size:12.5px;color:var(--muted);padding:4px 0;text-align:left}
+  .article-body{overflow-x:auto}
+  .prose img{max-width:100%;height:auto;border-radius:10px;border:1px solid var(--line);margin:10px 0;display:block;box-shadow:var(--shadow)}
+  .article-body .prose img,.article-body img{cursor:zoom-in;transition:filter .12s}
+  .article-body img:hover{filter:brightness(.97)}
+  .editor img{cursor:default}
+  .editor img.sel{outline:2px solid var(--amber);outline-offset:2px}
+
+  /* Image lightbox */
+  .lightbox{position:fixed;inset:0;background:rgba(10,13,18,.86);display:none;align-items:center;justify-content:center;z-index:100;padding:30px;cursor:zoom-out}
+  .find-bar{position:fixed;z-index:120;display:flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);box-shadow:0 8px 28px rgba(16,35,61,.20);border-radius:11px;padding:6px 8px}
+  .find-bar[hidden]{display:none}
+  .find-bar .fi{width:15px;height:15px;color:var(--faint);flex:0 0 auto;margin:0 1px}
+  .find-bar input{border:none;outline:none;background:transparent;color:var(--text);font-size:13.5px;width:190px;padding:2px}
+  .find-count{font-size:12px;color:var(--faint);min-width:58px;text-align:right;white-space:nowrap;flex:0 0 auto}
+  .find-bar button{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:var(--faint);background:none;border:none;cursor:pointer;flex:0 0 auto}
+  .find-bar button:hover{background:var(--mist);color:var(--text)}
+  .find-bar button svg{width:15px;height:15px}
+  mark.find-hit{background:#FCE39A;color:#3a2d00;border-radius:2px;padding:0 1px}
+  mark.find-hit.cur{background:#F5B301;color:#2a2000;box-shadow:0 0 0 2px rgba(245,179,1,.35)}
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:var(--shadow-lg)}
+  .prose>*:first-child{margin-top:0}
+  .prose>*:last-child{margin-bottom:0}
+  .article-body{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:24px 26px;box-shadow:var(--shadow)}
+
+  .empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;color:var(--muted)}
+  .empty .ill{width:62px;height:62px;border-radius:16px;background:var(--paper);border:1px solid var(--line);display:grid;place-items:center;margin-bottom:18px;box-shadow:var(--shadow)}
+  .empty .ill svg{width:28px;height:28px;color:var(--faint)}
+  .empty h2{font-family:var(--display);font-size:18px;color:var(--text);margin:0 0 6px;font-weight:600}
+  .empty p{max-width:340px;margin:0 0 18px;font-size:13.5px;line-height:1.6}
+  .empty .act{box-shadow:var(--shadow)}
+
+  /* Modals */
+  .overlay{position:fixed;inset:0;background:rgba(18,22,29,.42);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding:36px 20px;z-index:60;overflow-y:auto}
+  .overlay.show{display:flex}
+  .modal{background:var(--paper);border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:720px;margin:auto;animation:pop .18s ease}
+  .modal.sm{max-width:520px}
+  .modal.editor-modal{max-width:1040px;display:flex;flex-direction:column;max-height:calc(100vh - 48px)}
+  .modal.editor-modal .m-body{overflow-y:auto;flex:1 1 auto;min-height:0}
+  .modal.editor-modal .m-head,.modal.editor-modal .m-foot{flex:0 0 auto}
+  @media(max-width:680px){ .overlay{padding:14px 10px} .modal.editor-modal{max-height:calc(100vh - 28px)} }
+  @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:none}}
+  .m-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line2)}
+  .m-head h2{font-family:var(--display);font-size:17px;font-weight:600;margin:0}
+  .m-close{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--muted)}
+  .m-close:hover{background:var(--mist);color:var(--text)}
+  .m-close svg{width:17px;height:17px}
+  .m-body{padding:20px 22px}
+  .m-foot{display:flex;gap:10px;justify-content:flex-end;padding:16px 22px;border-top:1px solid var(--line2);background:#fbfcfd;border-radius:0 0 16px 16px}
+
+  .field{margin-bottom:15px}
+  .field:last-child{margin-bottom:0}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:6px}
+  .field .hint{font-weight:400;color:var(--faint);margin-left:6px;font-size:11.5px}
+  .field input{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;outline:none;background:var(--paper);transition:border-color .14s, box-shadow .14s}
+  .field input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(59,111,168,.2)}
+  .row2{display:flex;gap:13px}
+  .row2>.field{flex:1}
+
+  /* Rich text editor */
+  .editor-shell{border:1px solid var(--line);border-radius:10px;overflow:hidden;transition:border-color .14s, box-shadow .14s}
+  .editor-shell.focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(59,111,168,.2)}
+  .toolbar{display:flex;flex-wrap:wrap;gap:2px;padding:7px 8px;border-bottom:1px solid var(--line2);background:#fbfcfd}
+  .tb{height:30px;min-width:32px;padding:0 7px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;gap:4px;color:var(--muted);font-size:13px;font-weight:600;transition:.1s}
+  .tb:hover{background:var(--line2);color:var(--text)}
+  .tb svg{width:16px;height:16px}
+  .tb.txt{font-family:var(--display);font-weight:700}
+  .tb-sep{width:1px;background:var(--line);margin:4px 4px}
+  .editor{min-height:230px;max-height:46vh;overflow-y:auto;padding:14px 16px;outline:none;font-size:15px;line-height:1.7}
+  .editor:empty:before{content:attr(data-ph);color:var(--faint)}
+
+  .btn{height:38px;border-radius:9px;padding:0 16px;font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:.13s}
+  .btn-primary{background:var(--ink);color:#fff}
+  .btn-primary:hover{background:#1d2630}
+  .btn-amber{background:var(--amber);color:#fff}
+  .btn-amber:hover{background:#467cb5}
+  .btn-ghost{background:var(--paper);border:1px solid var(--line);color:var(--text)}
+  .btn-ghost:hover{border-color:#cfd6de}
+  .btn-danger{background:var(--paper);border:1px solid #f0cfcc;color:var(--red)}
+  .btn-danger:hover{background:#fcf0ef}
+  .btn svg{width:15px;height:15px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .cite-preview{font-family:var(--mono);font-size:13px;line-height:1.65;background:var(--slate);color:#dfe5ec;border-radius:10px;padding:15px 16px;white-space:pre-wrap;word-break:break-word;max-height:240px;overflow-y:auto;border:1px solid #2c3540}
+  .cite-opts{display:flex;flex-direction:column;gap:11px;margin-top:15px}
+  .opt{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text)}
+  .opt input[type=checkbox]{width:17px;height:17px;accent-color:var(--amber);cursor:pointer}
+  .tmpl-row{margin-top:14px}
+  .placeholders{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .ph{font-family:var(--mono);font-size:11px;color:var(--teal);background:var(--amber-soft);border-radius:6px;padding:3px 8px;cursor:pointer;border:1px solid transparent}
+  .ph:hover{border-color:var(--teal)}
+  .mono-in{font-family:var(--mono);font-size:13px}
+
+  .note{font-size:12.5px;color:var(--muted);line-height:1.6;background:var(--mist);border:1px solid var(--line2);border-radius:9px;padding:12px 14px;margin-top:10px}
+  .note b{color:var(--text)}
+  .danger-zone{margin-top:18px;border-top:1px solid var(--line2);padding-top:16px}
+
+  .status-box{border:1px solid var(--line);border-radius:11px;padding:14px;background:#fbfcfd}
+  .status-row{display:flex;align-items:center;gap:10px}
+  .status-row .lbl{font-weight:600;font-size:13.5px}
+  .status-pill{margin-left:auto;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px}
+  .status-pill.file{background:#e4f5ec;color:#1f6b48}
+  .status-pill.browser{background:var(--amber-soft);color:var(--amber-deep)}
+  .status-pill.memory{background:#fcecea;color:#a8362c}
+  .status-path{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:8px;word-break:break-all}
+  .btn-grid{display:flex;flex-wrap:wrap;gap:9px;margin-top:13px}
+
+  .toasts{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:90;display:flex;flex-direction:column;gap:9px;align-items:center;pointer-events:none}
+  .toast{background:var(--ink);color:#fff;border-radius:10px;padding:11px 16px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:9px;animation:rise .22s ease;max-width:90vw}
+  .toast svg{width:16px;height:16px;color:var(--amber);flex:0 0 auto}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .back-btn{display:none}
+
+  @media(max-width:860px){ .search-wrap{max-width:none} .brand .sub-line{display:none} }
+  @media(max-width:680px){
+    .brand b{display:none}
+    .kbd{display:none}
+    .body{position:relative}
+    .list-pane{width:100%}
+    .resizer{display:none}
+    #btnLayout{display:none}
+    .reader{display:none;position:absolute;inset:0;z-index:20}
+    .app.reading .list-pane{display:none}
+    .app.reading .reader{display:block}
+    .back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px}
+    .back-btn svg{width:16px;height:16px}
+    .reader-inner{padding:20px 18px 70px}
+    .r-title{font-size:23px}
+  }
+  /* ===== Dark theme ===== */
+  :root.theme-dark{
+    --ink:#1B2942;
+    --mist:#0E141C;
+    --paper:#161E29;
+    --line:#293443;
+    --line2:#1F2834;
+    --text:#E3E9F0;
+    --muted:#98A4B3;
+    --faint:#6B7785;
+    --amber:#5B92D1;
+    --amber-soft:#1C2D45;
+    --amber-deep:#9DC4ED;
+    --teal:#6FB0E0;
+    --green:#5BB487;
+    --red:#E0695E;
+    --star-empty:#3A4759;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.45);
+    --shadow-lg:0 18px 50px rgba(0,0,0,.6);
+  }
+  .theme-dark .prose{color:#D5DCE5}
+  .theme-dark .prose h2,.theme-dark .prose h3,.theme-dark .r-title,.theme-dark .rp-score{color:#F2F5F9}
+  .theme-dark .prose blockquote{color:#BBD3F0}
+  .theme-dark .toolbar,.theme-dark .m-foot,.theme-dark .status-box{background:#121A26}
+  .theme-dark .card:hover{background:#1B2430}
+  .theme-dark .r-tags .t,.theme-dark .ph{background:#1C2D45;color:#9DC4ED}
+  .theme-dark .act.primary,.theme-dark .btn-primary{background:#26375A}
+  .theme-dark .act.primary:hover,.theme-dark .btn-primary:hover{background:#2F4570}
+  .theme-dark .act.cite,.theme-dark .btn-amber,.theme-dark .btn-new{color:#0E141C}
+  .theme-dark .act.cite:hover,.theme-dark .btn-amber:hover,.theme-dark .btn-new:hover{background:#74A4DA}
+  .theme-dark .glyph{box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+
+</style>
+<script>(function(){try{if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.classList.add("theme-dark");}catch(e){}})();</script>
+
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="glyph" aria-hidden="true"><span class="od">OD</span></span>
+      <div>
+        <b>OD KnowledgeDesk</b>
+        <span class="sub-line">
+          <button class="sub" id="liveStatus" type="button" title="Storage status. Click for details."><span class="live-dot" id="liveDot"></span><span id="liveLabel">Loading</span></button>
+          <span class="sub-sep" id="subSep">&middot;</span>
+          <button class="sub" id="attachStatus" type="button" title="Attachments status. Click for details."><span class="live-dot" id="attachDot"></span><span id="attachLabel">Attachments</span></button>
+        </span>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" type="text" placeholder="Search titles, content, tags or KB number" autocomplete="off">
+      <button class="search-clear" id="searchClear" aria-label="Clear search" title="Clear search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <span class="kbd">/</span>
+    </div>
+
+    <div class="top-actions">
+      <button class="edit-badge" id="editState" style="display:none"></button>
+      <button class="icon-btn" id="btnLayout" title="Switch layout"></button>
+      <button class="icon-btn" id="btnTheme" title="Toggle dark mode"></button>
+      <button class="icon-btn" id="btnSettings" title="Shared library, settings, import and export">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      <button class="btn-new" id="btnNew">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        New article
+      </button>
+    </div>
+  </header>
+
+  <div class="body">
+    <aside class="list-pane">
+      <div class="list-head">
+        <div class="filters-bar">
+        <button class="fil-arrow left" id="filLeft" aria-label="Scroll categories left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+        <div class="filters" id="filters"></div>
+        <button class="fil-arrow right" id="filRight" aria-label="Scroll categories right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+        <div class="list-sub">
+          <span class="count" id="count">0 articles</span>
+          <div class="sort">
+            <select id="sort">
+              <option value="rated" selected>Top rated</option>
+              <option value="updated">Recently updated</option>
+              <option value="created">Newest</option>
+              <option value="title">Title A to Z</option>
+              <option value="cited">Most cited</option>
+            </select>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="list" id="list"></div>
+    </aside>
+
+    <div class="resizer" id="resizer" role="separator" aria-orientation="vertical" aria-label="Resize the article list" title="Drag to resize. Double-click to reset."></div>
+
+    <main class="reader" id="reader"></main>
+  </div>
+</div>
+
+<!-- Editor modal -->
+<div class="overlay" id="editorOverlay">
+  <div class="modal editor-modal">
+    <div class="m-head">
+      <h2 id="editorTitle">New article</h2>
+      <button class="m-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="m-body">
+      <div class="field">
+        <label>Title</label>
+        <input id="fTitle" type="text" placeholder="e.g. Reset an Active Directory password">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Category</label>
+          <input id="fCat" type="text" list="catList" placeholder="e.g. Accounts">
+          <datalist id="catList"></datalist>
+        </div>
+        <div class="field">
+          <label>Tags <span class="hint">comma separated</span></label>
+          <input id="fTags" type="text" placeholder="password, AD, login">
+        </div>
+      </div>
+      <div class="field">
+        <label>Article content <span class="hint">paste from anywhere, formatting is kept</span></label>
+        <div class="editor-shell" id="editorShell">
+          <div class="toolbar" id="toolbar">
+            <button class="tb" data-cmd="bold" title="Bold (Ctrl B)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 0 8H6zM6 12h9a4 4 0 0 1 0 8H6z"/></svg></button>
+            <button class="tb" data-cmd="italic" title="Italic (Ctrl I)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 4h-9M14 20H5M15 4 9 20"/></svg></button>
+            <button class="tb" data-cmd="underline" title="Underline (Ctrl U)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 4v6a6 6 0 0 0 12 0V4M4 21h16"/></svg></button>
+            <span class="tb-sep"></span>
+            <button class="tb txt" data-block="H2" title="Heading">H2</button>
+            <button class="tb txt" data-block="H3" title="Subheading">H3</button>
+            <span class="tb-sep"></span>
+            <button class="tb" data-cmd="insertUnorderedList" title="Bulleted list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg></button>
+            <button class="tb" data-cmd="insertOrderedList" title="Numbered list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6h11M10 12h11M10 18h11M4 4v4M3 12h2l-2 3h2"/></svg></button>
+            <button class="tb" data-block="BLOCKQUOTE" title="Quote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3 0 7-1 7-8V5H3zM14 21c3 0 7-1 7-8V5h-7z"/></svg></button>
+            <button class="tb" data-block="PRE" title="Code block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button>
+            <span class="tb-sep"></span>
+            <button class="tb" data-act="image" title="Insert image or screenshot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></button>
+            <span class="tb-sep"></span>
+            <button class="tb" data-act="link" title="Add web link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg></button>
+            <button class="tb" data-act="kblink" title="Link to another article"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></svg></button>
+            <button class="tb" data-cmd="removeFormat" data-block-clear="1" title="Clear formatting"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4 9 20"/><path d="m17 16 4 4M21 16l-4 4"/></svg></button>
+          </div>
+          <div class="editor prose" id="fBody" contenteditable="true" data-ph="Type or paste the resolution steps here..."></div>
+        </div>
+        <input type="file" id="imgInput" accept="image/*" multiple hidden>
+      </div>
+      <div class="field">
+        <label>Attached files <span class="hint">stored in K:\Attachments\</span></label>
+        <div class="attach-list" id="fAttachList"></div>
+        <div class="attach-drop" id="fAttachDrop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>Drag files here, or use Browse</span>
+        </div>
+        <div class="attach-add">
+          <input id="fAttachPath" type="text" placeholder="File name, e.g.  Reset-Password.pdf">
+          <button type="button" class="btn btn-ghost" id="btnBrowseAttach" title="Browse for a file">Browse…</button>
+          <input id="fAttachName" type="text" placeholder="Display name (optional)">
+          <button type="button" class="btn btn-ghost" id="btnAddAttach">Add file</button>
+        </div>
+        <input type="file" id="attachFileInput" multiple hidden>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-amber" id="saveArticle">Save article</button>
+    </div>
+  </div>
+</div>
+
+<!-- Article picker (for internal links) -->
+<div class="overlay" id="pickerOverlay">
+  <div class="modal sm">
+    <div class="m-head">
+      <h2>Link to an article</h2>
+      <button class="m-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="m-body">
+      <div class="field" style="margin-bottom:12px">
+        <input id="pickerSearch" type="text" placeholder="Search articles by title or KB number" autocomplete="off">
+      </div>
+      <div id="pickerList" class="picker-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Cite modal -->
+<div class="overlay" id="citeOverlay">
+  <div class="modal">
+    <div class="m-head">
+      <h2>Cite in Cherwell</h2>
+      <button class="m-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="m-body">
+      <div class="cite-preview" id="citePreview"></div>
+      <div class="cite-opts">
+        <label class="opt"><input type="checkbox" id="optBody"> Include the full article steps</label>
+        <label class="opt"><input type="checkbox" id="optCount" checked> Count this as a resolution using the article</label>
+      </div>
+      <div class="tmpl-row">
+        <div class="field" style="margin-bottom:0">
+          <label>Resolution template</label>
+          <input id="citeTmpl" type="text" class="mono-in">
+          <div class="placeholders" id="placeholders"></div>
+        </div>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn btn-ghost" data-close>Close</button>
+      <button class="btn btn-amber" id="copyCite">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy for Cherwell
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal sm">
+    <div class="m-head">
+      <h2>Settings</h2>
+      <button class="m-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="m-body">
+      <div class="field">
+        <label>Shared library</label>
+        <div class="status-box">
+          <div class="status-row">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted)"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span class="lbl">Storage</span>
+            <span class="status-pill" id="storePill">...</span>
+          </div>
+          <div class="status-path" id="storePath"></div>
+          <div class="btn-grid" id="fileBtns"></div>
+        </div>
+        <div class="note" id="storeNote"></div>
+      </div>
+
+      <div class="field">
+        <label>File attachments</label>
+        <div class="status-box">
+          <div class="status-row">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="lbl">K:\Attachments</span>
+            <span class="status-pill" id="attachPill">...</span>
+          </div>
+          <div class="status-path" id="attachPath"></div>
+          <div class="btn-grid" id="attachBtns"></div>
+        </div>
+        <div class="note" id="attachNote"></div>
+      </div>
+      <div class="field" id="editAccessField" style="display:none">
+        <label>Editing access</label>
+        <div id="editSettings"></div>
+      </div>
+
+      <div class="field">
+        <label>Default Cherwell resolution template</label>
+        <input id="setTmpl" type="text" class="mono-in">
+        <div class="placeholders" id="setPlaceholders"></div>
+      </div>
+
+      <div class="field" style="margin-bottom:0">
+        <label>Backup and bulk add</label>
+        <div class="btn-grid" style="margin-top:0">
+          <button class="btn btn-ghost" id="btnExport">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+            Export all (JSON)
+          </button>
+          <button class="btn btn-ghost" id="btnImport">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/></svg>
+            Import
+          </button>
+        </div>
+        <input type="file" id="fileInput" accept="application/json" hidden>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reconnect prompt (shown on reload when a shared file is remembered) -->
+<div class="overlay" id="reconnectOverlay">
+  <div class="modal sm">
+    <div class="m-head">
+      <h2>Reconnect to your shared library</h2>
+    </div>
+    <div class="m-body">
+      <p style="margin:0 0 14px;color:var(--muted);font-size:13.5px;line-height:1.6">For your security, the browser asks permission again each time this page loads. Reconnect to <b id="reconnectName" style="color:var(--text)"></b> to load the latest articles and save your changes back to it.</p>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <button class="btn btn-amber" id="reconnectNow" style="justify-content:center">Reconnect to the shared library</button>
+        <button class="btn btn-ghost" id="reconnectOther" style="justify-content:center">Choose a different file</button>
+        <button class="btn btn-ghost" id="reconnectDevice" style="justify-content:center;border:none;color:var(--muted)">Work on this device only</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
+<div class="find-bar" id="findBar" hidden>
+  <svg class="fi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+  <input id="findInput" type="text" placeholder="Find in article" autocomplete="off" spellcheck="false">
+  <span class="find-count" id="findCount"></span>
+  <button id="findPrev" title="Previous (Shift+Enter)" aria-label="Previous match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>
+  <button id="findNext" title="Next (Enter)" aria-label="Next match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+  <button id="findClose" title="Close (Esc)" aria-label="Close find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+</div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================
+     Storage layer
+     Priorities, highest first:
+       1. file    : a shared JSON file (File System Access API).
+                    Auto saves and reloads when others change it.
+       2. browser : window.storage, used inside the Claude preview.
+       3. memory   : no persistence, manual export and import only.
+  ========================================================= */
+  var hasNative = !!(window.kbNative && window.kbNative.read);
+  var FSA = !!(window.showOpenFilePicker && window.showSaveFilePicker);
+  var hasBrowserStore = !!(window.storage && window.storage.get);
+  var storageMode = hasNative ? "native" : (FSA ? "memory" : (hasBrowserStore ? "browser" : "memory"));
+
+  var fileHandle = null;
+  var lastFileModified = 0;
+  var saving = false, saveQueued = false;
+  var DB = "kbdesk", DB_STORE = "handles";
+
+  /* ---- IndexedDB: remember the connected file across sessions ---- */
+  function idb(){
+    return new Promise(function(res,rej){
+      if(!window.indexedDB){ rej(); return; }
+      var r = indexedDB.open(DB,1);
+      r.onupgradeneeded = function(){ r.result.createObjectStore(DB_STORE); };
+      r.onsuccess = function(){ res(r.result); };
+      r.onerror = function(){ rej(); };
+    });
+  }
+  async function idbSet(k,v){ try{ var db=await idb(); var t=db.transaction(DB_STORE,"readwrite"); t.objectStore(DB_STORE).put(v,k); }catch(e){} }
+  async function idbGet(k){ try{ var db=await idb(); return await new Promise(function(res){ var t=db.transaction(DB_STORE,"readonly"); var rq=t.objectStore(DB_STORE).get(k); rq.onsuccess=function(){res(rq.result);}; rq.onerror=function(){res(null);}; }); }catch(e){ return null; } }
+  async function idbDel(k){ try{ var db=await idb(); var t=db.transaction(DB_STORE,"readwrite"); t.objectStore(DB_STORE).delete(k); }catch(e){} }
+
+  /* ---- App state ---- */
+  var state = {
+    articles: [],
+    nextNum: 1,
+    settings: { template: "Resolved using Knowledge Article {id}: {title}" },
+    filter:"all", sortKey:"rated", query:"", selectedId:null
+  };
+  var PLACEHOLDERS = ["{id}","{title}","{category}","{date}","{tags}"];
+
+  function payloadString(){
+    return JSON.stringify({ app:"OD KnowledgeDesk", version:2, articles:state.articles, nextNum:state.nextNum, settings:state.settings });
+  }
+  function applyPayload(txt){
+    try{
+      var p = typeof txt==="string" ? JSON.parse(txt) : txt;
+      var arr = Array.isArray(p) ? p : (p.articles||[]);
+      state.articles = arr.map(normalize);
+      state.nextNum = (p && p.nextNum) ? p.nextNum : (maxNum()+1);
+      if(p && p.settings && p.settings.template) state.settings = p.settings;
+      var ids={}; state.articles.forEach(function(a){ ids[a.id]=1; });
+      for(var k in artCache){ if(!ids[k]) delete artCache[k]; }
+      return true;
+    }catch(e){ return false; }
+  }
+  function maxNum(){ return state.articles.reduce(function(m,a){return Math.max(m, a.num||0);},0); }
+
+  /* ---- Browser store (Claude preview) ---- */
+  async function browserLoad(){
+    if(!hasBrowserStore) return false;
+    try{
+      var r = await window.storage.get("kb_data_v2", false);
+      if(r && r.value){ applyPayload(r.value); return true; }
+    }catch(e){}
+    return false;
+  }
+  async function browserSave(){
+    if(!hasBrowserStore) return;
+    var data=payloadString();
+    if(data.length > 4.6*1024*1024){ toast("This library is too large for device storage. Connect a shared file to keep images."); return; }
+    try{ await window.storage.set("kb_data_v2", data, false); }catch(e){ toast("Could not save. The library may be too large for device storage."); }
+  }
+
+  /* ---- Shared file (File System Access) ---- */
+  async function verifyPermission(handle, write){
+    if(!handle.queryPermission) return true;
+    var opts = { mode: write ? "readwrite" : "read" };
+    if((await handle.queryPermission(opts))==="granted") return true;
+    if((await handle.requestPermission(opts))==="granted") return true;
+    return false;
+  }
+  async function fileLoad(){
+    var f = await fileHandle.getFile();
+    lastFileModified = f.lastModified;
+    var txt = await f.text();
+    if(txt.trim()) applyPayload(txt);
+  }
+  async function fileSave(){
+    if(!fileHandle){ return; }
+    if(saving){ saveQueued = true; return; }
+    saving = true;
+    try{
+      var w = await fileHandle.createWritable();
+      await w.write(payloadString());
+      await w.close();
+      var f = await fileHandle.getFile();
+      lastFileModified = f.lastModified;
+    }catch(e){ readOnlyFile=true; applyGate(); renderReader(); toast("The shared file is read only for you. Your changes were not saved."); }
+    saving = false;
+    if(saveQueued){ saveQueued=false; fileSave(); }
+  }
+  async function connectFile(create){
+    if(!FSA){ toast("This browser cannot open a shared file. Use Chrome or Edge, or use Import and Export."); return; }
+    try{
+      if(create){
+        fileHandle = await window.showSaveFilePicker({ suggestedName:"od-knowledgedesk-library.json", types:[{description:"OD KnowledgeDesk library", accept:{"application/json":[".json"]}}] });
+        await fileSave();
+      }else{
+        var picked = await window.showOpenFilePicker({ types:[{description:"OD KnowledgeDesk library", accept:{"application/json":[".json"]}}], multiple:false });
+        fileHandle = picked[0];
+        await fileLoad();
+      }
+      storageMode = "file";
+      await idbSet("library", fileHandle);
+      startWatch();
+      renderAll(); updateLive(); renderStorageUI();
+      toast(create ? "Shared library created and connected" : "Connected to the shared library");
+    }catch(e){
+      if(e && e.name === "AbortError") return; // user cancelled
+      toast("Could not open that file");
+    }
+  }
+  async function disconnectFile(){
+    fileHandle = null; await idbDel("library");
+    storageMode = hasBrowserStore ? "browser" : "memory";
+    stopWatch();
+    if(storageMode==="browser"){ await browserSave(); }
+    updateLive(); renderStorageUI();
+    toast("Disconnected. New edits are no longer saved to the shared file.");
+  }
+  var pendingHandle = null;
+  async function tryReconnect(){
+    if(!FSA) return false;
+    var h = await idbGet("library");
+    if(!h) return false;
+    var perm = "prompt";
+    try{ perm = h.queryPermission ? await h.queryPermission({mode:"readwrite"}) : "granted"; }catch(e){ perm = "prompt"; }
+    if(perm === "granted"){
+      try{ fileHandle = h; await fileLoad(); storageMode = "file"; startWatch(); return true; }catch(e){ return false; }
+    }
+    if(perm !== "denied") pendingHandle = h; // remembered, but the browser needs a click to restore access
+    return false;
+  }
+  function showReconnectPrompt(){
+    var n = (pendingHandle && pendingHandle.name) ? pendingHandle.name : "your shared library";
+    document.getElementById("reconnectName").textContent = n;
+    show("reconnectOverlay");
+  }
+  async function reconnectNow(){
+    var h = pendingHandle;
+    if(!h){ hide("reconnectOverlay"); return; }
+    try{
+      var granted = (await h.requestPermission({mode:"readwrite"})) === "granted";
+      if(granted){
+        fileHandle = h; await fileLoad(); storageMode = "file"; startWatch();
+        pendingHandle = null; hide("reconnectOverlay");
+        updateLive(); renderAll(); renderStorageUI();
+        toast("Reconnected to the shared library");
+      } else { toast("The browser did not grant access to the file"); }
+    }catch(e){ toast("Could not reconnect to the shared file"); }
+  }
+  async function chooseDifferentFile(){
+    await connectFile(false);
+    if(storageMode === "file"){ pendingHandle = null; hide("reconnectOverlay"); }
+  }
+  async function useDeviceInstead(){
+    pendingHandle = null; hide("reconnectOverlay");
+    storageMode = hasBrowserStore ? "browser" : "memory";
+    if(hasBrowserStore){ await browserLoad(); }
+    if(state.articles.length === 0){ state.articles = seedData(); state.nextNum = 4; persist(); }
+    updateLive(); renderAll();
+    toast("Using device storage. Your shared file was not changed.");
+  }
+
+  /* ---- Watch the shared file for other people's edits ---- */
+  var watchTimer = null;
+  function startWatch(){ stopWatch(); window.addEventListener("focus", checkFile); watchTimer = setInterval(checkFile, 15000); }
+  function stopWatch(){ if(watchTimer) clearInterval(watchTimer); watchTimer=null; window.removeEventListener("focus", checkFile); }
+  async function checkFile(){
+    if(storageMode!=="file" || !fileHandle || saving) return;
+    if(anyOpen()) return; // do not reload while the user is editing
+    try{
+      var f = await fileHandle.getFile();
+      if(f.lastModified > lastFileModified){
+        var keep = state.selectedId;
+        await fileLoad();
+        if(!state.articles.find(function(a){return a.id===keep;})) state.selectedId = null;
+        renderAll();
+        toast("Library refreshed with the latest changes");
+      }
+    }catch(e){}
+  }
+
+  /* ---- Native desktop bridge (Electron): direct read/write to the shared file ---- */
+  var nativeWatching=false;
+  async function nativeLoad(){
+    try{
+      var path = await window.kbNative.getPath();
+      if(!path) return false;
+      var txt = await window.kbNative.read();
+      if(txt && txt.trim()) applyPayload(txt);
+      try{ if(window.kbNative.canWrite){ readOnlyFile = !(await window.kbNative.canWrite()); } }catch(e){}
+      if(!nativeWatching){ window.kbNative.onChange(function(){ nativeReload(); }); nativeWatching=true; }
+      return true;
+    }catch(e){ return false; }
+  }
+  async function nativeReload(){
+    if(anyOpen() || saving) return;
+    try{
+      var txt = await window.kbNative.read();
+      if(txt){ var keep=state.selectedId; applyPayload(txt); if(!state.articles.find(function(a){return a.id===keep;})) state.selectedId=null; renderAll(); toast("Library refreshed with the latest changes"); }
+    }catch(e){}
+  }
+  async function nativeSave(){
+    if(saving){ saveQueued=true; return; }
+    saving=true;
+    try{ await window.kbNative.write(payloadString()); }
+    catch(e){ readOnlyFile=true; applyGate(); renderReader(); toast("The shared library is read only for you. Your changes were not saved."); }
+    saving=false;
+    if(saveQueued){ saveQueued=false; nativeSave(); }
+  }
+  async function nativeChoose(){
+    try{
+      var path = await window.kbNative.pickFile();
+      if(!path) return;
+      var txt = await window.kbNative.read();
+      if(txt && txt.trim()) applyPayload(txt);
+      else { if(state.articles.length===0){ state.articles=seedData(); state.nextNum=4; } await nativeSave(); }
+      if(!nativeWatching){ window.kbNative.onChange(function(){ nativeReload(); }); nativeWatching=true; }
+      renderAll(); updateLive(); renderStorageUI();
+      toast("Connected to the shared library");
+    }catch(e){ toast("Could not open that file"); }
+  }
+
+  /* ---- Unified persist ---- */
+  var persistTimer = null;
+  function persist(){
+    if(readOnlyFile) return; // viewer cannot write shared data
+    if(storageMode==="native"){ clearTimeout(persistTimer); persistTimer=setTimeout(nativeSave, 250); }
+    else if(storageMode==="file"){ clearTimeout(persistTimer); persistTimer=setTimeout(fileSave, 250); }
+    else if(storageMode==="browser"){ browserSave(); }
+  }
+
+  /* =========================================================
+     Content helpers: sanitise rich HTML, derive plain text
+  ========================================================= */
+  var ALLOWED = {P:1,BR:1,B:1,STRONG:1,I:1,EM:1,U:1,H2:1,H3:1,UL:1,OL:1,LI:1,A:1,BLOCKQUOTE:1,PRE:1,CODE:1,IMG:1,TABLE:1,THEAD:1,TBODY:1,TFOOT:1,TR:1,TD:1,TH:1,CAPTION:1};
+  function sanitize(html){
+    var doc = new DOMParser().parseFromString("<div>"+(html||"")+"</div>","text/html");
+    var root = doc.body.firstChild;
+    (function walk(node){
+      var kids = Array.prototype.slice.call(node.childNodes);
+      kids.forEach(function(n){
+        if(n.nodeType===8){ n.remove(); return; } // comment
+        if(n.nodeType!==1){ return; } // keep text
+        var tag = n.tagName;
+        if(tag==="SCRIPT"||tag==="STYLE"){ n.remove(); return; }
+        walk(n);
+        if(!ALLOWED[tag]){
+          // unwrap unknown element, keep its children
+          var parent = n.parentNode;
+          while(n.firstChild) parent.insertBefore(n.firstChild, n);
+          parent.removeChild(n);
+          return;
+        }
+        // strip every attribute except safe href on links
+        Array.prototype.slice.call(n.attributes).forEach(function(at){ n.removeAttribute(at.name); });
+        if(tag==="A"){ /* href set below via original */ }
+      });
+    })(root);
+    // restore safe links: re-parse original to map hrefs is complex, so handle links during walk instead
+    return root.innerHTML;
+  }
+  // A second, simpler pass that keeps safe hrefs by sanitising before stripping:
+  function sanitizeKeepLinks(html){
+    var doc = new DOMParser().parseFromString("<div>"+(html||"")+"</div>","text/html");
+    var root = doc.body.firstChild;
+    function clean(node){
+      Array.prototype.slice.call(node.childNodes).forEach(function(n){
+        if(n.nodeType===8){ n.remove(); return; }
+        if(n.nodeType!==1) return;
+        if(n.tagName==="SCRIPT"||n.tagName==="STYLE"){ n.remove(); return; }
+        clean(n);
+        if(!ALLOWED[n.tagName]){
+          var p=n.parentNode; while(n.firstChild) p.insertBefore(n.firstChild,n); p.removeChild(n); return;
+        }
+        var href = n.tagName==="A" ? n.getAttribute("href") : null;
+        var dataKb = n.tagName==="A" ? n.getAttribute("data-kb") : null;
+        var imgSrc = n.tagName==="IMG" ? n.getAttribute("src") : null;
+        var imgAlt = n.tagName==="IMG" ? (n.getAttribute("alt")||"") : null;
+        var isCell = (n.tagName==="TD"||n.tagName==="TH");
+        var colspan = isCell ? n.getAttribute("colspan") : null;
+        var rowspan = isCell ? n.getAttribute("rowspan") : null;
+        Array.prototype.slice.call(n.attributes).forEach(function(a){ n.removeAttribute(a.name); });
+        if(n.tagName==="A"){
+          if(dataKb && /^KB-\d+$/.test(dataKb)){ n.setAttribute("data-kb",dataKb); n.setAttribute("class","kb-link"); n.setAttribute("href","#"); }
+          else if(href && /^(https?:|mailto:)/i.test(href)){ n.setAttribute("href",href); n.setAttribute("target","_blank"); n.setAttribute("rel","noopener"); }
+          else { var p=n.parentNode; while(n.firstChild) p.insertBefore(n.firstChild,n); p.removeChild(n); }
+        }
+        if(n.tagName==="IMG"){
+          if(imgSrc && /^(data:image\/(png|jpeg|jpg|gif|webp);|https:)/i.test(imgSrc)){ n.setAttribute("src",imgSrc); if(imgAlt) n.setAttribute("alt",imgAlt); n.setAttribute("loading","lazy"); }
+          else { n.remove(); }
+        }
+        if(isCell){
+          if(colspan && /^[1-9][0-9]?$/.test(colspan)) n.setAttribute("colspan",colspan);
+          if(rowspan && /^[1-9][0-9]?$/.test(rowspan)) n.setAttribute("rowspan",rowspan);
+        }
+      });
+    }
+    clean(root);
+    return root.innerHTML.trim();
+  }
+  function isHTML(s){ return /<[a-z][\s\S]*>/i.test(s||""); }
+  function plainToHTML(text){
+    var esc = escapeHTML(text||"");
+    var blocks = esc.split(/\n{2,}/).map(function(b){ return "<p>"+b.replace(/\n/g,"<br>")+"</p>"; });
+    return blocks.join("");
+  }
+  function htmlToPlain(html){
+    var s = (html||"")
+      .replace(/<\/(td|th)>\s*(?=<(td|th)[\s>])/gi,"\t")
+      .replace(/<\/(p|div|h2|h3|li|blockquote|pre|tr|caption)>/gi,"\n")
+      .replace(/<br\s*\/?>/gi,"\n")
+      .replace(/<li[^>]*>/gi,"\u2022 ")
+      .replace(/<[^>]+>/g,"");
+    var d = document.createElement("div"); d.innerHTML = s;
+    return (d.textContent||"").replace(/[ \t]+\n/g,"\n").replace(/\n{3,}/g,"\n\n").trim();
+  }
+  function escapeHTML(s){ return (s||"").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+
+  // Parse tab/quote-delimited clipboard text (the complete data a spreadsheet always provides),
+  // respecting quoted cells that contain tabs or line breaks.
+  function parseDelimited(text){
+    var rows=[], row=[], cur="", i=0, inQ=false, ch, next;
+    text=String(text).replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+    while(i<text.length){
+      ch=text[i];
+      if(inQ){
+        if(ch==='"'){ next=text[i+1]; if(next==='"'){ cur+='"'; i+=2; continue; } inQ=false; i++; continue; }
+        cur+=ch; i++; continue;
+      }
+      if(ch==='"'){ inQ=true; i++; continue; }
+      if(ch==='\t'){ row.push(cur); cur=""; i++; continue; }
+      if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=""; i++; continue; }
+      cur+=ch; i++;
+    }
+    row.push(cur); rows.push(row);
+    // drop a trailing empty row from a final newline
+    if(rows.length>1){ var last=rows[rows.length-1]; if(last.length===1 && last[0]==="") rows.pop(); }
+    return rows;
+  }
+  function tableFromRows(rows){
+    var cols=rows.reduce(function(m,r){return Math.max(m,r.length);},0);
+    var html='<table><tbody>';
+    for(var r=0;r<rows.length;r++){
+      html+='<tr>';
+      for(var c=0;c<cols;c++){ html+='<td>'+escapeHTML(rows[r][c]!=null?rows[r][c]:"").replace(/\n/g,"<br>")+'</td>'; }
+      html+='</tr>';
+    }
+    html+='</tbody></table>';
+    return { html:html, rows:rows.length, cols:cols };
+  }
+  // Insert HTML at the caret using the Range API. More reliable than execCommand for large tables.
+  function insertHTMLAtCaret(html){
+    editor.focus();
+    var sel=window.getSelection();
+    var frag=document.createRange().createContextualFragment(html);
+    var lastNode=frag.lastChild;
+    if(sel && sel.rangeCount && editor.contains(sel.anchorNode)){
+      var range=sel.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(frag);
+      if(lastNode){ range.setStartAfter(lastNode); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); }
+    } else {
+      editor.appendChild(frag);
+    }
+  }
+
+  function normalize(a){
+    a = a || {};
+    var body = a.body || "";
+    if(!isHTML(body)) body = plainToHTML(body);
+    return {
+      id: a.id || pad(a.num||0),
+      num: a.num || 0,
+      title: a.title || "Untitled",
+      category: a.category || "",
+      tags: Array.isArray(a.tags) ? a.tags : (a.tags ? String(a.tags).split(",").map(function(s){return s.trim();}).filter(Boolean) : []),
+      body: sanitizeKeepLinks(body),
+      created: a.created || nowISO(),
+      updated: a.updated || nowISO(),
+      cited: a.cited || 0,
+      lastCited: a.lastCited || null,
+      ratings: (a.ratings && typeof a.ratings==="object") ? a.ratings : {},
+      ratingUpdated: a.ratingUpdated || null,
+      files: Array.isArray(a.files) ? a.files.filter(function(f){ return f && (f.file || f.path); }).map(function(f){ return { name: f.name || "", file: (f.file || fileBaseName(f.path || "")) }; }) : []
+    };
+  }
+
+  /* ---- small utils ---- */
+  function pad(n){ return "KB-"+String(n).padStart(4,"0"); }
+  function nowISO(){ return new Date().toISOString(); }
+  function fmtDate(iso){ if(!iso) return ""; return new Date(iso).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}); }
+  function relTime(iso){
+    if(!iso) return "";
+    var diff=(Date.now()-new Date(iso).getTime())/1000;
+    if(diff<60) return "just now";
+    if(diff<3600) return Math.floor(diff/60)+"m ago";
+    if(diff<86400) return Math.floor(diff/3600)+"h ago";
+    if(diff<604800) return Math.floor(diff/86400)+"d ago";
+    return fmtDate(iso);
+  }
+  function highlight(text,q){
+    var e=escapeHTML(text);
+    if(!q) return e;
+    var terms=q.trim().split(/\s+/).filter(Boolean).map(function(t){return t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");});
+    if(!terms.length) return e;
+    return e.replace(new RegExp("("+terms.join("|")+")","ig"),"<mark>$1</mark>");
+  }
+  // Build a highlighter once per render instead of a new regex per card
+  function makeHighlighter(q){
+    var terms=(q||"").trim().split(/\s+/).filter(Boolean).map(function(t){return t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");});
+    if(!terms.length) return function(t){ return escapeHTML(t); };
+    var re=new RegExp("("+terms.join("|")+")","ig");
+    return function(t){ return escapeHTML(t).replace(re,"<mark>$1</mark>"); };
+  }
+  // Cache the expensive plain-text/searchable form of each article so search does not
+  // re-parse HTML (and skip over large embedded images) on every keystroke.
+  var artCache={};
+  function artMeta(a){
+    var c=artCache[a.id];
+    if(c && c.u===a.updated && c.t===a.title && c.cat===(a.category||"") && c.tg===(a.tags||[]).join(",")) return c;
+    var plain=htmlToPlain(a.body);
+    var snippet=plain.replace(/\s+/g," ").trim().slice(0,180);
+    var idx=(a.id+" "+a.title+" "+(a.category||"")+" "+(a.tags||[]).join(" ")+" "+plain).toLowerCase();
+    c={ u:a.updated, t:a.title, cat:(a.category||""), tg:(a.tags||[]).join(","), snippet:snippet, idx:idx, img:/<img/i.test(a.body) };
+    artCache[a.id]=c; return c;
+  }
+
+  /* ---- Ratings ---- */
+  var analystId = null; // a per-device id so each analyst gets one vote they can change
+  function ratingCount(a){ return a.ratings ? Object.keys(a.ratings).length : 0; }
+  function ratingAvg(a){ var c=ratingCount(a); if(!c) return 0; var s=0; for(var k in a.ratings) s+=Number(a.ratings[k])||0; return s/c; }
+  // Smoothed score: new or lightly rated articles sit near a neutral 3, consistent high ratings climb toward 5
+  function ratingScore(a){ var c=ratingCount(a), m=ratingAvg(a), PW=2, PM=3; return (m*c + PM*PW)/(c+PW); }
+  function myRating(a){ return (a.ratings && analystId && a.ratings[analystId]) ? a.ratings[analystId] : 0; }
+  function setMyRating(id, stars){
+    var a=state.articles.find(function(x){return x.id===id;}); if(!a) return;
+    if(!a.ratings) a.ratings={};
+    if(stars===0) delete a.ratings[analystId]; else a.ratings[analystId]=stars;
+    a.ratingUpdated=nowISO();
+    persist(); renderList(); renderReader();
+  }
+  function relevance(a, terms){
+    var t=(a.title||"").toLowerCase(), id=(a.id||"").toLowerCase(), tg=(a.tags||[]).join(" ").toLowerCase(), s=0;
+    terms.forEach(function(w){ if(id.indexOf(w)!==-1) s+=3; if(t.indexOf(w)!==-1) s+=2; if(tg.indexOf(w)!==-1) s+=1; });
+    return s;
+  }
+  function starsHTML(avg, size){
+    var pct=Math.max(0,Math.min(100,(avg/5)*100));
+    return '<span class="stars" style="font-size:'+(size||14)+'px"><span class="s-base">\u2605\u2605\u2605\u2605\u2605</span><span class="s-fill" style="width:'+pct+'%">\u2605\u2605\u2605\u2605\u2605</span></span>';
+  }
+
+  /* ---- Favorites (personal, saved on this device only) ---- */
+  var favorites = new Set();
+  function isFav(id){ return favorites.has(id); }
+  function favCount(){ return state.articles.reduce(function(n,a){ return n + (favorites.has(a.id)?1:0); },0); }
+  function toggleFav(id){
+    var added;
+    if(favorites.has(id)){ favorites.delete(id); added=false; } else { favorites.add(id); added=true; }
+    try{ idbSet("favorites", Array.from(favorites)); }catch(e){}
+    renderFilters(); renderList(); renderReader();
+    toast(added ? "Added to your favorites" : "Removed from your favorites");
+  }
+  function bookmarkSVG(filled){
+    return '<svg viewBox="0 0 24 24" fill="'+(filled?"currentColor":"none")+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+  }
+  function fileSVG(){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+  }
+  // All attachments live in one shared folder. We store only the file name and
+  // build the full path from this prefix so editors never type a folder path.
+  var ATTACH_DIR = "K:\\Attachments\\";
+  function fileBaseName(s){ return (s||"").split(/[/\\]/).pop() || (s||""); }
+  function attachFullPath(f){
+    if(!f) return "";
+    // Prefer a stored bare file name; fall back to extracting it from any older full path.
+    var name = f.file || fileBaseName(f.path || "");
+    return name ? (ATTACH_DIR + name) : "";
+  }
+
+  /* ---- Access control: read-only when the shared file is not writable ---- */
+  var readOnlyFile=false;   // the shared file is not writable for this user (network permission)
+  function canWriteShared(){ return !readOnlyFile; }
+  function canEdit(){ return !readOnlyFile; }
+  function applyGate(){
+    var ed=canEdit();
+    var nw=document.getElementById("btnNew"); if(nw) nw.style.display = ed ? "" : "none";
+    updateEditBadge();
+  }
+  function updateEditBadge(){
+    var el=document.getElementById("editState"); if(!el) return;
+    var eye='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+    if(readOnlyFile){ el.style.display="inline-flex"; el.className="edit-badge ro"; el.innerHTML=eye+"View only"; el.onclick=null; el.title="The shared library is read only for your account"; }
+    else { el.style.display="none"; el.onclick=null; }
+  }
+
+  /* =========================================================
+     Filtering and sorting
+  ========================================================= */
+  function categories(){
+    var map={};
+    state.articles.forEach(function(a){ var c=a.category||"Uncategorised"; map[c]=(map[c]||0)+1; });
+    return Object.keys(map).sort().map(function(c){return {name:c,count:map[c]};});
+  }
+  function visibleArticles(){
+    var terms=state.query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    var arr=state.articles.filter(function(a){
+      if(state.filter==="__fav__"){ if(!isFav(a.id)) return false; }
+      else if(state.filter!=="all" && (a.category||"Uncategorised")!==state.filter) return false;
+      if(!terms.length) return true;
+      var hay=artMeta(a).idx;
+      return terms.every(function(t){ return hay.indexOf(t)!==-1; });
+    });
+    var key=state.sortKey;
+    // Compute each article's sort values once, then sort, to avoid recomputing
+    // rating and relevance scores on every comparison (O(n log n) -> O(n)).
+    var d=arr.map(function(a){
+      return { a:a, t:a.title||"", u:a.updated||"", cr:a.created||"", ct:a.cited||0,
+               sc:(key==="rated"?ratingScore(a):0), rel:(key==="rated"&&terms.length?relevance(a,terms):0), rc:(key==="rated"?ratingCount(a):0) };
+    });
+    d.sort(function(a,b){
+      switch(key){
+        case "title": return a.t.localeCompare(b.t);
+        case "created": return b.cr.localeCompare(a.cr);
+        case "cited": return (b.ct-a.ct) || b.u.localeCompare(a.u);
+        case "updated": return b.u.localeCompare(a.u);
+        default: return (b.sc-a.sc) || (b.rel-a.rel) || (b.rc-a.rc) || b.u.localeCompare(a.u);
+      }
+    });
+    return d.map(function(x){ return x.a; });
+  }
+
+  /* =========================================================
+     Rendering
+  ========================================================= */
+  function renderAll(){ renderFilters(); renderList(); renderReader(); renderDatalist(); applyGate(); }
+
+  function renderFilters(){
+    var el=document.getElementById("filters");
+    var fc=favCount();
+    var html='<button class="chip fav-chip '+(state.filter==="__fav__"?"on":"")+'" data-cat="__fav__">'+bookmarkSVG(true)+'Favorites<span class="ct">'+fc+'</span></button>';
+    html+='<button class="chip '+(state.filter==="all"?"on":"")+'" data-cat="all">All<span class="ct">'+state.articles.length+'</span></button>';
+    categories().forEach(function(c){ html+='<button class="chip '+(state.filter===c.name?"on":"")+'" data-cat="'+escapeHTML(c.name)+'">'+escapeHTML(c.name)+'<span class="ct">'+c.count+'</span></button>'; });
+    el.innerHTML=html;
+    el.querySelectorAll(".chip").forEach(function(b){ b.onclick=function(){ state.filter=b.getAttribute("data-cat"); renderFilters(); renderList(); }; });
+    requestAnimationFrame(updateFilterArrows);
+  }
+  function updateFilterArrows(){
+    var f=document.getElementById("filters"); if(!f) return;
+    var bar=f.parentNode;
+    var max=f.scrollWidth - f.clientWidth - 1;
+    var more=(f.scrollWidth - f.clientWidth) > 2;
+    var L=more && f.scrollLeft>2;
+    var R=more && f.scrollLeft<max;
+    document.getElementById("filLeft").classList.toggle("show", L);
+    document.getElementById("filRight").classList.toggle("show", R);
+    bar.classList.toggle("more-left", L);
+    bar.classList.toggle("more-right", R);
+  }
+  function scrollFilters(dir){ document.getElementById("filters").scrollBy({left:dir*180, behavior:"smooth"}); }
+
+  function renderList(){
+    var list=document.getElementById("list");
+    var arr=visibleArticles();
+    var totalCites=state.articles.reduce(function(s,a){return s+(a.cited||0);},0);
+    document.getElementById("count").textContent=arr.length+(arr.length===1?" article":" articles")+(totalCites?" \u00b7 "+totalCites+" resolved":"")+((state.query && state.sortKey==="rated")?" \u00b7 top rated first":"");
+    if(!arr.length){
+      var eTitle = state.filter==="__fav__" ? "No favorites yet" : ((state.query||state.filter!=="all")?"Nothing matches":"No articles yet");
+      var eMsg = state.filter==="__fav__" ? "Open an article and choose Favorite to keep it here for quick access." : ((state.query||state.filter!=="all")?"Try a different word or clear the filter.":"Add your first article to start building the knowledge base.");
+      list.innerHTML='<div class="empty" style="height:auto;padding:50px 30px"><div class="ill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(state.filter==="__fav__"?'<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>':'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>')+'</svg></div><h2>'+eTitle+'</h2><p>'+eMsg+'</p></div>';
+      return;
+    }
+    var q=state.query;
+    var hl=makeHighlighter(q);
+    list.innerHTML=arr.map(function(a){
+      var meta=artMeta(a);
+      var snippet=meta.snippet;
+      var hasImg=meta.img;
+      var rc=ratingCount(a), ra=ratingAvg(a);
+      var ratingFoot = rc ? '<span class="rt">'+starsHTML(ra,12)+'<span class="num">'+ra.toFixed(1)+'</span><span class="rcount">('+rc+')</span></span>' : '<span class="rt unrated">Unrated</span>';
+      var favOn=isFav(a.id);
+      return '<div class="card '+(a.id===state.selectedId?"active":"")+'" data-id="'+a.id+'"><div class="card-top"><span class="kbid">'+a.id+'</span>'+(a.category?'<span class="cat-tag">'+escapeHTML(a.category)+'</span>':'')+'<button class="card-fav '+(favOn?"on":"")+'" data-fav="'+a.id+'" title="'+(favOn?"Remove from favorites":"Add to favorites")+'" aria-label="Favorite">'+bookmarkSVG(favOn)+'</button></div><h3>'+hl(a.title)+'</h3><div class="snippet">'+(snippet?hl(snippet):(hasImg?'<span style="color:var(--faint)">Image only</span>':''))+'</div><div class="card-foot">'+ratingFoot+'<span class="dot2"></span><span>'+relTime(a.updated)+'</span>'+(hasImg?'<span style="display:flex;align-items:center;gap:4px;color:var(--faint)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span>':'')+(a.cited?'<span class="cited"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'+a.cited+'\u00d7</span>':'')+'</div></div>';
+    }).join("");
+  }
+
+  function renderReader(){
+    var r=document.getElementById("reader");
+    var a=state.articles.find(function(x){return x.id===state.selectedId;});
+    if(!a){
+      r.innerHTML='<div class="empty"><div class="ill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><h2>Select an article</h2><p>Pick an article from the list to read it, copy it, or cite it on a Cherwell ticket.</p>'+(canEdit()?'<button class="act primary" id="emptyNew"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New article</button>':'')+'</div>';
+      var en=document.getElementById("emptyNew"); if(en) en.onclick=openNew; return;
+    }
+    var tags=(a.tags||[]).filter(Boolean);
+    var rc=ratingCount(a), ra=ratingAvg(a), mine=myRating(a);
+    var prevId=null;
+    for(var i=navStack.length-1;i>=0;i--){ if(navStack[i].id!==a.id && state.articles.find(function(x){return x.id===navStack[i].id;})){ prevId=navStack[i].id; break; } }
+    var prev = prevId ? state.articles.find(function(x){return x.id===prevId;}) : null;
+    var backPrev = prev ? '<a class="back-prev" id="backPrev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span class="bp-t">Back to '+prev.id+': '+escapeHTML(prev.title)+'</span></a>' : '';
+    var ed=canEdit(), cw=canWriteShared();
+    var rateBtns=''; for(var v=1; v<=5; v++){ rateBtns+='<button data-v="'+v+'" class="'+(v<=mine?'on':'')+'" title="'+v+' of 5">\u2605</button>'; }
+    var rpRight = cw ? '<div class="rp-right"><span class="lbl">'+(mine?'Your rating':'Rate its usefulness')+'</span><span class="rate" id="rateStars">'+rateBtns+'</span>'+(mine?'<button class="rp-clear" id="clearRate">Remove</button>':'')+'</div>' : '';
+    var ratingPanel='<div class="rating-panel"><div class="rp-left">'+starsHTML(ra,18)+'<div><div class="rp-score">'+(rc?ra.toFixed(1):'\u2014')+'</div><div class="rp-sub">'+(rc?(rc+' '+(rc===1?'analyst rating':'analyst ratings')):'No ratings yet')+'</div></div></div>'+rpRight+'</div>';
+    var editBtn = ed ? '<button class="act ghost" id="aEdit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Edit</button>' : '';
+    var delBtn = ed ? '<button class="act danger" id="aDelete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete</button>' : '';
+    var files=(a.files||[]).filter(function(f){return f&&(f.file||f.path);});
+    var isElectron=!!(window.kbNative && window.kbNative.openPath);
+    var attachPanel = files.length ? '<div class="attach-panel"><div class="attach-panel-head">'+fileSVG()+'<span>Attached Files</span><span style="font-weight:400;color:var(--faint);margin-left:4px">('+files.length+')</span></div>'+files.map(function(f,i){
+      var fullPath=attachFullPath(f);
+      var name=escapeHTML(f.name||fileBaseName(fullPath));
+      var pathDisplay=escapeHTML(fullPath);
+      var openLabel=isElectron?"Open":"Download";
+      var openIcon=isElectron
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+      var openBtn='<button class="al-btn primary" data-dl="'+i+'">'+openIcon+openLabel+'</button>';
+      var exploreBtn=isElectron?'<button class="al-btn" data-explore="'+i+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Show folder</button>':'';
+      return '<div class="attach-link" data-path="'+escapeHTML(fullPath)+'" data-file="'+escapeHTML(f.file||fileBaseName(fullPath))+'"><span class="al-icon">'+fileSVG()+'</span><span class="al-name" title="Open '+escapeHTML(fullPath)+'" data-dl2="'+i+'">'+name+'</span><span class="al-path">'+pathDisplay+'</span><span class="al-btns">'+openBtn+exploreBtn+'<button class="al-btn" data-copy="'+i+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy path</button></span></div>';
+    }).join("")+'</div>' : '';
+    r.innerHTML='<div class="reader-inner"><button class="back-btn" id="backBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>All articles</button><div class="r-id">'+a.id+'</div><h1 class="r-title">'+escapeHTML(a.title)+'</h1><div class="r-meta">'+(a.category?'<span class="r-cat">'+escapeHTML(a.category)+'</span>':'')+'<span>Updated <b>'+fmtDate(a.updated)+'</b></span><span class="dot"></span><span>Created '+fmtDate(a.created)+'</span>'+(rc?'<span class="dot"></span><span>Rated <b>'+ra.toFixed(1)+'</b> by '+rc+'</span>':'')+(a.cited?'<span class="dot"></span><span>Resolved <b>'+a.cited+'</b> '+(a.cited===1?"ticket":"tickets")+'</span>':'')+'</div><div class="r-sticky">'+backPrev+'<div class="r-actions"><button class="act cite" id="aCite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-6 0v4"/><rect x="2" y="9" width="20" height="11" rx="2"/></svg>Cite in Cherwell</button><button class="act primary" id="aCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy article</button><button class="act ghost" id="aFind"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Find</button>'+editBtn+'<button class="act fav '+(isFav(a.id)?"on":"")+'" id="aFav">'+bookmarkSVG(isFav(a.id))+(isFav(a.id)?"Favorited":"Favorite")+'</button>'+delBtn+'</div></div>'+ratingPanel+'<div class="article-body prose">'+a.body+'</div>'+(tags.length?'<div class="r-tags">'+tags.map(function(t){return '<span class="t">#'+escapeHTML(t)+'</span>';}).join("")+'</div>':'')+attachPanel+'</div>';
+    document.getElementById("aCite").onclick=function(){ openCite(a); };
+    document.getElementById("aCopy").onclick=function(){ copyArticle(a); };
+    var af=document.getElementById("aFind"); if(af) af.onclick=openFind;
+    var ae=document.getElementById("aEdit"); if(ae) ae.onclick=function(){ openEdit(a); };
+    var fb2=document.getElementById("aFav"); if(fb2) fb2.onclick=function(){ toggleFav(a.id); };
+    var adel=document.getElementById("aDelete"); if(adel) adel.onclick=function(){ delArticle(a); };
+    var bb=document.getElementById("backBtn"); if(bb) bb.onclick=function(){ document.getElementById("app").classList.remove("reading"); };
+    var bp=document.getElementById("backPrev"); if(bp) bp.onclick=function(e){ e.preventDefault(); goBack(); };
+    // Interactive rating
+    var rateEl=document.getElementById("rateStars");
+    if(rateEl){
+      var paint=function(val){ rateEl.querySelectorAll("button").forEach(function(b){ b.classList.toggle("on", parseInt(b.dataset.v,10)<=val); }); };
+      rateEl.querySelectorAll("button").forEach(function(b){
+        b.onmouseenter=function(){ paint(parseInt(b.dataset.v,10)); };
+        b.onclick=function(){ setMyRating(a.id, parseInt(b.dataset.v,10)); toast("Thanks, rated "+b.dataset.v+" of 5"); };
+      });
+      rateEl.onmouseleave=function(){ paint(myRating(a)); };
+    }
+    var cr=document.getElementById("clearRate"); if(cr) cr.onclick=function(){ setMyRating(a.id, 0); toast("Your rating was removed"); };
+    // Wire attachment buttons
+    if(files.length){
+      r.querySelectorAll("[data-copy]").forEach(function(b){
+        b.onclick=function(){
+          var row=b.closest(".attach-link"); var p=row?row.getAttribute("data-path"):"";
+          navigator.clipboard.writeText(p).then(function(){ toast("Path copied to clipboard"); }).catch(function(){ toast("Copy failed. Path: "+p); });
+        };
+      });
+      // Primary action (Open in Electron / Download in browser) on the button and the name
+      function wireOpen(b){
+        b.onclick=function(){
+          var row=b.closest(".attach-link"); if(!row) return;
+          openAttachment(row.getAttribute("data-path"), row.getAttribute("data-file"));
+        };
+      }
+      r.querySelectorAll("[data-dl]").forEach(wireOpen);
+      r.querySelectorAll("[data-dl2]").forEach(function(b){ wireOpen(b); b.style.cursor="pointer"; });
+      if(isElectron){
+        r.querySelectorAll("[data-explore]").forEach(function(b){
+          b.onclick=function(){
+            var row=b.closest(".attach-link"); var p=row?row.getAttribute("data-path"):"";
+            window.kbNative.showInFolder(p).catch(function(e){ toast("Could not open folder: "+e.message); });
+          };
+        });
+      }
+    }
+    refreshFindIfOpen();
+  }
+
+  // Open (Electron) or download (browser) an attachment.
+  async function openAttachment(fullPath, fileName){
+    if(window.kbNative && window.kbNative.openPath){
+      window.kbNative.openPath(fullPath).catch(function(e){ toast("Could not open file: "+e.message); });
+      return;
+    }
+    // Browser: read the file from the granted Attachments folder and download it
+    try{
+      var dir=await getAttachDirHandle();
+      if(dir){
+        var fh=await dir.getFileHandle(fileBaseName(fileName||fullPath), { create:false });
+        var file=await fh.getFile();
+        var url=URL.createObjectURL(file);
+        var a=document.createElement("a"); a.href=url; a.download=file.name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+        return;
+      }
+    }catch(e){
+      toast("Could not read the file from Attachments. Copying the path instead.");
+    }
+    // Fallback: copy the path so the user can open it from Explorer
+    navigator.clipboard.writeText(fullPath).then(function(){ toast("Path copied. Paste into Explorer to open."); }).catch(function(){ toast(fullPath); });
+  }
+
+  function renderDatalist(){
+    document.getElementById("catList").innerHTML=categories().map(function(c){return '<option value="'+escapeHTML(c.name)+'">';}).join("");
+  }
+  var navStack=[]; // {id, scroll} entries so Back returns to where you were
+  function applyScroll(top){
+    var r=document.getElementById("reader");
+    r.scrollTop=top;
+    requestAnimationFrame(function(){ r.scrollTop=top; });
+    setTimeout(function(){ r.scrollTop=top; }, 60); // settle after images size
+  }
+  function select(id, isBack, restoreScroll){
+    if(!isBack && state.selectedId && state.selectedId!==id){
+      navStack.push({ id:state.selectedId, scroll:document.getElementById("reader").scrollTop });
+      if(navStack.length>50) navStack.shift();
+    }
+    state.selectedId=id;
+    document.getElementById("app").classList.add("reading");
+    renderList(); renderReader();
+    applyScroll(isBack && typeof restoreScroll==="number" ? restoreScroll : 0);
+  }
+  function goBack(){
+    while(navStack.length){
+      var e=navStack.pop();
+      if(e.id!==state.selectedId && state.articles.find(function(x){return x.id===e.id;})){ select(e.id, true, e.scroll); return; }
+    }
+  }
+
+  /* =========================================================
+     Rich text editor
+  ========================================================= */
+  var editor=document.getElementById("fBody");
+  function exec(cmd,val){ editor.focus(); try{ document.execCommand(cmd,false,val||null); }catch(e){} }
+  function toggleBlock(tag){
+    editor.focus();
+    var cur=document.queryCommandValue("formatBlock");
+    if(cur && cur.toUpperCase()===tag){ try{ document.execCommand("formatBlock",false,"P"); }catch(e){} }
+    else{ try{ document.execCommand("formatBlock",false,tag); }catch(e){} }
+  }
+
+  /* ---- Internal links to other articles ---- */
+  var savedRange=null;
+  function openPicker(){
+    var sel=window.getSelection();
+    savedRange = (sel && sel.rangeCount && editor.contains(sel.anchorNode)) ? sel.getRangeAt(0).cloneRange() : null;
+    document.getElementById("pickerSearch").value="";
+    renderPicker("");
+    show("pickerOverlay","pickerSearch");
+  }
+  function renderPicker(q){
+    var list=document.getElementById("pickerList");
+    q=(q||"").trim().toLowerCase();
+    var arr=state.articles.filter(function(a){
+      if(a.id===editingId) return false; // do not link an article to itself
+      if(!q) return true;
+      return (a.id+" "+a.title+" "+(a.category||"")).toLowerCase().indexOf(q)!==-1;
+    }).slice(0,80);
+    if(!arr.length){ list.innerHTML='<div class="picker-empty">'+(state.articles.length<=1?"There are no other articles to link to yet.":"No articles match that search.")+'</div>'; return; }
+    list.innerHTML=arr.map(function(a){
+      return '<div class="picker-item" data-id="'+a.id+'"><span class="pk-id">'+a.id+'</span><span class="pk-title">'+escapeHTML(a.title)+'</span>'+(a.category?'<span class="pk-cat">'+escapeHTML(a.category)+'</span>':'')+'</div>';
+    }).join("");
+    list.querySelectorAll(".picker-item").forEach(function(el){
+      el.onclick=function(){ var a=state.articles.find(function(x){return x.id===el.getAttribute("data-id");}); if(a) insertArticleLink(a); };
+    });
+  }
+  function insertArticleLink(article){
+    hide("pickerOverlay");
+    editor.focus();
+    var sel=window.getSelection();
+    if(savedRange){ sel.removeAllRanges(); sel.addRange(savedRange); }
+    var range = (sel.rangeCount && editor.contains(sel.anchorNode)) ? sel.getRangeAt(0) : null;
+    var a=document.createElement("a");
+    a.className="kb-link"; a.setAttribute("data-kb",article.id); a.setAttribute("href","#");
+    var space=document.createTextNode("\u00A0");
+    if(range && !range.collapsed){
+      a.textContent = range.toString() || article.title;
+      range.deleteContents(); range.insertNode(a); a.parentNode.insertBefore(space,a.nextSibling);
+    } else if(range){
+      a.textContent = article.title; range.insertNode(a); a.parentNode.insertBefore(space,a.nextSibling);
+    } else {
+      a.textContent = article.title; editor.appendChild(a); editor.appendChild(space);
+    }
+    var r2=document.createRange(); r2.setStartAfter(space); r2.collapse(true);
+    sel.removeAllRanges(); sel.addRange(r2);
+    savedRange=null;
+  }
+
+  function bindEditor(){
+    document.getElementById("toolbar").addEventListener("mousedown", function(e){
+      var b=e.target.closest(".tb"); if(!b) return;
+      e.preventDefault();
+      if(b.dataset.cmd && !b.dataset.blockClear){ exec(b.dataset.cmd); }
+      else if(b.dataset.blockClear){ exec("removeFormat"); try{document.execCommand("formatBlock",false,"P");}catch(e2){} }
+      else if(b.dataset.block){ toggleBlock(b.dataset.block); }
+      else if(b.dataset.act==="link"){
+        var url=prompt("Link address (https://...)");
+        if(url){ if(!/^(https?:|mailto:)/i.test(url)) url="https://"+url; exec("createLink",url); }
+      }
+      else if(b.dataset.act==="kblink"){ openPicker(); }
+      else if(b.dataset.act==="image"){ document.getElementById("imgInput").click(); }
+    });
+    var shell=document.getElementById("editorShell");
+    editor.addEventListener("focus",function(){ shell.classList.add("focus"); });
+    editor.addEventListener("blur",function(){ shell.classList.remove("focus"); });
+
+    // Insert images chosen from the file picker
+    document.getElementById("imgInput").onchange=function(e){
+      var files=Array.prototype.slice.call(e.target.files||[]);
+      editor.focus();
+      files.forEach(insertImageFromBlob);
+      e.target.value="";
+    };
+
+    // Paste: spreadsheets keep their grid, lone images become pictures, everything else keeps safe formatting
+    editor.addEventListener("paste", function(e){
+      var dt=e.clipboardData||window.clipboardData;
+      var html=dt.getData("text/html");
+      var text=dt.getData("text/plain");
+      var hasTable = html && /<table[\s>]/i.test(html);
+      var hasTab = text && text.indexOf("\t")>=0;
+      var imgs=imageFilesFrom(dt);
+      e.preventDefault();
+      // Spreadsheet data: build the table from the tab-separated text, which is always complete
+      // even for large ranges (Excel's HTML is often missing or truncated for big selections).
+      if(hasTab){
+        var rows=parseDelimited(text);
+        var cols=rows.reduce(function(m,r){return Math.max(m,r.length);},0);
+        var nonEmpty=rows.filter(function(r){return r.some(function(c){return c!=="";});}).length || 1;
+        var multiCol=rows.filter(function(r){return r.length>=2;}).length;
+        if(cols>=2 && multiCol>=Math.ceil(nonEmpty*0.5)){
+          var t=tableFromRows(rows);
+          insertHTMLAtCaret(t.html);
+          if(t.rows*t.cols>20000) toast("Large table added ("+t.rows+" rows). Saving may take a moment.");
+          return;
+        }
+      }
+      // A single-cell or small HTML table with no tabs: keep the HTML table
+      if(hasTable){ insertHTMLAtCaret(sanitizeKeepLinks(html)); return; }
+      // No table: a real image (screenshot, picture) is inserted as a picture
+      if(imgs.length){ imgs.forEach(insertImageFromBlob); return; }
+      // Otherwise keep whatever safe formatting the HTML has, or fall back to plain text
+      var insert = html ? sanitizeKeepLinks(html) : escapeHTML(text).replace(/\n/g,"<br>");
+      insertHTMLAtCaret(insert);
+    });
+
+    // Drag and drop image files
+    editor.addEventListener("dragover", function(e){ if(e.dataTransfer && Array.prototype.some.call(e.dataTransfer.items||[],function(i){return i.type&&i.type.indexOf("image")===0;})){ e.preventDefault(); shell.classList.add("focus"); } });
+    editor.addEventListener("drop", function(e){
+      var imgs=imageFilesFrom(e.dataTransfer);
+      if(imgs.length){ e.preventDefault(); editor.focus(); imgs.forEach(insertImageFromBlob); }
+    });
+
+    // Click an image to select it; Backspace or Delete removes it
+    editor.addEventListener("click", function(e){
+      editor.querySelectorAll("img.sel").forEach(function(i){i.classList.remove("sel");});
+      if(e.target.tagName==="IMG") e.target.classList.add("sel");
+    });
+    editor.addEventListener("keydown", function(e){
+      if((e.key==="Delete"||e.key==="Backspace")){
+        var sel=editor.querySelector("img.sel");
+        if(sel){ e.preventDefault(); sel.remove(); }
+      }
+    });
+  }
+
+  function imageFilesFrom(dt){
+    if(!dt) return [];
+    var out=[];
+    if(dt.items){ Array.prototype.slice.call(dt.items).forEach(function(it){ if(it.kind==="file" && it.type && it.type.indexOf("image")===0){ var f=it.getAsFile(); if(f) out.push(f); } }); }
+    if(!out.length && dt.files){ Array.prototype.slice.call(dt.files).forEach(function(f){ if(f.type && f.type.indexOf("image")===0) out.push(f); }); }
+    return out;
+  }
+
+  // Read an image, downscale very large ones to keep file size sensible, and insert it
+  function insertImageFromBlob(blob){
+    var MAXW=1600, MAXH=1600;
+    var reader=new FileReader();
+    reader.onload=function(){
+      var src=reader.result;
+      var img=new Image();
+      img.onload=function(){
+        var w=img.naturalWidth, h=img.naturalHeight, finalSrc=src;
+        if(w>MAXW || h>MAXH){
+          var scale=Math.min(MAXW/w, MAXH/h);
+          var cw=Math.round(w*scale), ch=Math.round(h*scale);
+          var cv=document.createElement("canvas"); cv.width=cw; cv.height=ch;
+          var ctx=cv.getContext("2d"); ctx.drawImage(img,0,0,cw,ch);
+          // PNG preserves screenshot text; JPEG keeps photos smaller
+          var isPng=/^data:image\/png/i.test(src);
+          try{ finalSrc=cv.toDataURL(isPng?"image/png":"image/jpeg", isPng?undefined:0.9); }catch(e){ finalSrc=src; }
+        }
+        try{ document.execCommand("insertImage",false,finalSrc); }
+        catch(e){ var el=document.createElement("img"); el.src=finalSrc; editor.appendChild(el); }
+      };
+      img.onerror=function(){ toast("That image could not be read"); };
+      img.src=src;
+    };
+    reader.onerror=function(){ toast("That image could not be read"); };
+    reader.readAsDataURL(blob);
+  }
+
+  /* =========================================================
+     Editor open / save
+  ========================================================= */
+  var editingId=null;
+  function openNew(){ editingId=null; document.getElementById("editorTitle").textContent="New article"; fillEditor({title:"",category:state.filter!=="all"?state.filter:"",tags:[],body:""}); show("editorOverlay","fTitle"); }
+  function openEdit(a){ editingId=a.id; document.getElementById("editorTitle").textContent="Edit "+a.id; fillEditor(a); show("editorOverlay","fTitle"); }
+  function fillEditor(a){
+    document.getElementById("fTitle").value=a.title||"";
+    document.getElementById("fCat").value=a.category||"";
+    document.getElementById("fTags").value=(a.tags||[]).join(", ");
+    editAttachments = (a.files||[]).map(function(f){ return { name:f.name||"", file:(f.file||fileBaseName(f.path||"")) }; });
+    renderAttachList();
+    editor.innerHTML=a.body||"";
+    renderDatalist();
+  }
+  function saveArticle(){
+    var title=document.getElementById("fTitle").value.trim();
+    var bodyHTML=sanitizeKeepLinks(editor.innerHTML);
+    if(!title){ toast("Give the article a title first"); document.getElementById("fTitle").focus(); return; }
+    if(!htmlToPlain(bodyHTML) && !/<img/i.test(bodyHTML)){ toast("Add some content to the article"); editor.focus(); return; }
+    var cat=document.getElementById("fCat").value.trim();
+    var tags=document.getElementById("fTags").value.split(",").map(function(t){return t.trim();}).filter(Boolean);
+    if(editingId){
+      var a=state.articles.find(function(x){return x.id===editingId;});
+      a.title=title; a.category=cat; a.tags=tags; a.body=bodyHTML; a.files=editAttachments.slice(); a.updated=nowISO();
+      state.selectedId=a.id; toast("Article updated");
+    }else{
+      var num=maxNum()+1;
+      var na={id:pad(num),num:num,title:title,category:cat,tags:tags,body:bodyHTML,files:editAttachments.slice(),created:nowISO(),updated:nowISO(),cited:0,lastCited:null};
+      state.nextNum=num+1; state.articles.unshift(na); state.selectedId=na.id; toast("Article "+na.id+" added");
+    }
+    persist(); hide("editorOverlay"); renderAll();
+    document.getElementById("app").classList.add("reading");
+  }
+  function delArticle(a){
+    if(!confirm("Delete "+a.id+' "'+a.title+'"? This cannot be undone.')) return;
+    state.articles=state.articles.filter(function(x){return x.id!==a.id;});
+    delete artCache[a.id];
+    navStack=navStack.filter(function(x){return x.id!==a.id;});
+    if(state.selectedId===a.id) state.selectedId=null;
+    persist(); renderAll();
+    document.getElementById("app").classList.remove("reading");
+    toast("Article deleted");
+  }
+
+  /* =========================================================
+     Cite in Cherwell
+  ========================================================= */
+  var citeArticle=null;
+  function buildCite(a,tmpl,includeBody){
+    var map={"{id}":a.id,"{title}":a.title,"{category}":a.category||"Uncategorised","{date}":fmtDate(nowISO()),"{tags}":(a.tags||[]).join(", ")};
+    var line=tmpl.replace(/\{id\}|\{title\}|\{category\}|\{date\}|\{tags\}/g,function(m){return map[m];});
+    if(includeBody) line+="\n\n"+htmlToPlain(a.body);
+    return line;
+  }
+  function refreshCitePreview(){ document.getElementById("citePreview").textContent=buildCite(citeArticle,document.getElementById("citeTmpl").value,document.getElementById("optBody").checked); }
+  function openCite(a){
+    citeArticle=a;
+    document.getElementById("citeTmpl").value=state.settings.template;
+    document.getElementById("optBody").checked=false;
+    var cwc=canWriteShared();
+    var oc=document.getElementById("optCount"); oc.checked=cwc; oc.disabled=!cwc;
+    refreshCitePreview();
+    renderPlaceholders("placeholders","citeTmpl",refreshCitePreview);
+    show("citeOverlay");
+  }
+  function doCopyCite(){
+    var text=buildCite(citeArticle,document.getElementById("citeTmpl").value,document.getElementById("optBody").checked);
+    copyText(text,"Resolution copied. Paste it into Cherwell.");
+    if(document.getElementById("optCount").checked){
+      citeArticle.cited=(citeArticle.cited||0)+1; citeArticle.lastCited=nowISO();
+      persist(); renderList(); renderReader();
+    }
+    hide("citeOverlay");
+  }
+  function renderPlaceholders(containerId,inputId,cb){
+    var c=document.getElementById(containerId);
+    c.innerHTML=PLACEHOLDERS.map(function(p){return '<span class="ph" data-ph="'+p+'">'+p+'</span>';}).join("");
+    c.querySelectorAll(".ph").forEach(function(el){
+      el.onclick=function(){
+        var inp=document.getElementById(inputId);
+        var s=inp.selectionStart||inp.value.length;
+        inp.value=inp.value.slice(0,s)+el.getAttribute("data-ph")+inp.value.slice(inp.selectionEnd||s);
+        inp.focus(); if(cb) cb();
+      };
+    });
+  }
+
+  /* =========================================================
+     Settings, storage UI, backup
+  ========================================================= */
+  function openSettings(){
+    document.getElementById("setTmpl").value=state.settings.template;
+    renderPlaceholders("setPlaceholders","setTmpl",null);
+    renderStorageUI();
+    renderEditSettings();
+    renderAttachStatus();
+    show("settingsOverlay");
+  }
+  function renderEditSettings(){
+    var field=document.getElementById("editAccessField");
+    var box=document.getElementById("editSettings");
+    if(!field || !box) return;
+    if(readOnlyFile){
+      field.style.display="";
+      box.innerHTML='<div class="note">The shared library is read only for your account, so adding, editing, and deleting are turned off. Who can edit is controlled by the file permissions on the network drive.</div>';
+    }else{
+      field.style.display="none";
+      box.innerHTML="";
+    }
+  }
+  function renderStorageUI(){
+    var pill=document.getElementById("storePill");
+    var path=document.getElementById("storePath");
+    var btns=document.getElementById("fileBtns");
+    var note=document.getElementById("storeNote");
+    pill.className="status-pill "+(storageMode==="native"?"file":storageMode);
+    if(storageMode==="native"){
+      pill.textContent="Shared file";
+      btns.innerHTML='<button class="btn btn-amber" id="bChoose">Choose shared file</button><button class="btn btn-ghost" id="bReloadN">Reload</button>';
+      note.innerHTML="This desktop app writes every change straight to the shared file on your network drive and reloads automatically when a teammate saves. Point every analyst at the same file. The most recent save wins if two people edit the same instant.";
+      window.kbNative.getPath().then(function(p){ path.textContent = p ? ("Shared file: "+p) : "No shared file chosen yet. Click Choose shared file to pick one on the network drive."; });
+      var ch=document.getElementById("bChoose"); if(ch) ch.onclick=nativeChoose;
+      var rl=document.getElementById("bReloadN"); if(rl) rl.onclick=nativeReload;
+      return;
+    }
+    if(storageMode==="file"){
+      pill.textContent="Shared file";
+      path.textContent=fileHandle ? ("Connected file: "+fileHandle.name) : "";
+      btns.innerHTML='<button class="btn btn-ghost" id="bRefresh">Refresh now</button><button class="btn btn-ghost" id="bDisc">Disconnect</button>';
+      note.innerHTML="Every change is written to this file. It refreshes automatically when a teammate saves. If two people edit at the same time, the most recent save wins.";
+    }else if(storageMode==="browser"){
+      pill.textContent="This browser";
+      path.textContent="Saved inside the Claude preview on this device.";
+      btns.innerHTML=(FSA?'<button class="btn btn-amber" id="bConnect">Connect a shared file</button><button class="btn btn-ghost" id="bCreate">Create a shared file</button>':'');
+      note.innerHTML="To share one library across the team, put this page on the network or an intranet web address, then connect a shared file on the drive. Use Export and Import as a backup anywhere.";
+    }else{
+      pill.textContent="Not saved";
+      path.textContent="";
+      btns.innerHTML=(FSA?'<button class="btn btn-amber" id="bConnect">Connect a shared file</button><button class="btn btn-ghost" id="bCreate">Create a shared file</button>':'');
+      note.innerHTML=FSA
+        ? "Connect or create a shared <b>.json</b> file on your network drive so edits are saved and shared. The whole team points at the same file. Note: the browser only allows this when the page is opened from a web address (https), not a raw file path."
+        : "This browser cannot open a shared file directly. Use Chrome or Edge for shared storage, or use Export and Import to move articles in and out as a JSON file.";
+    }
+    var r=document.getElementById("bRefresh"); if(r) r.onclick=function(){ checkFile(); };
+    var d=document.getElementById("bDisc"); if(d) d.onclick=disconnectFile;
+    var c=document.getElementById("bConnect"); if(c) c.onclick=function(){ connectFile(false); };
+    var cr=document.getElementById("bCreate"); if(cr) cr.onclick=function(){ connectFile(true); };
+  }
+  async function renderAttachStatus(){
+    var pill=document.getElementById("attachPill");
+    var path=document.getElementById("attachPath");
+    var btns=document.getElementById("attachBtns");
+    var note=document.getElementById("attachNote");
+    if(!pill) return;
+    if(window.kbNative && window.kbNative.copyAttach){
+      pill.className="status-pill file"; pill.textContent="Automatic";
+      path.textContent="Files are copied to K:\\Attachments on the network drive automatically.";
+      btns.innerHTML="";
+      note.innerHTML="In the desktop app, dropping or browsing a file copies it into the shared K:\\Attachments folder so every teammate can open it.";
+      return;
+    }
+    // Browser: status depends on whether the Attachments folder handle is granted
+    var granted=false;
+    try{ var h=await idbGet("attachDir"); if(h){ var p=await h.queryPermission({mode:"readwrite"}); granted=(p==="granted"); } }catch(e){}
+    if(granted){
+      pill.className="status-pill file"; pill.textContent="Connected";
+      path.textContent="Connected to your K:\\Attachments folder. Dropped files are copied there for everyone.";
+      btns.innerHTML='<button class="btn btn-ghost" id="bAttachPick">Change folder</button>';
+    }else{
+      pill.className="status-pill memory"; pill.textContent="Not connected";
+      path.textContent="Attachments you add will be recorded by name only. Teammates will see the entry but cannot open the file until it exists in K:\\Attachments.";
+      btns.innerHTML='<button class="btn btn-amber" id="bAttachPick">Connect K:\\Attachments folder</button>';
+    }
+    note.innerHTML="To share attachments in the browser, connect the K:\\Attachments folder once. Then dropping or browsing a file copies it there so other users can open it. This needs Chrome or Edge.";
+    var b=document.getElementById("bAttachPick");
+    if(b) b.onclick=async function(){
+      attachDirHandle=null;
+      try{ await idbSet("attachDir", null); }catch(e){}
+      var dir=await getAttachDirHandle();
+      if(dir){ toast("Attachments folder connected"); } else { toast("No folder selected"); }
+      renderAttachStatus(); updateAttachLive();
+    };
+  }
+  function saveSettingsTemplate(){
+    var t=document.getElementById("setTmpl").value.trim();
+    if(t){ state.settings.template=t; persist(); }
+  }
+  function exportData(){
+    var blob=new Blob([JSON.stringify({app:"OD KnowledgeDesk",exportedAt:nowISO(),version:2,articles:state.articles,nextNum:state.nextNum,settings:state.settings},null,2)],{type:"application/json"});
+    var url=URL.createObjectURL(blob); var a=document.createElement("a");
+    a.href=url; a.download="od-knowledgedesk-export.json"; a.click(); URL.revokeObjectURL(url);
+    toast("Exported "+state.articles.length+" articles");
+  }
+  function importData(file){
+    var reader=new FileReader();
+    reader.onload=function(){
+      try{
+        var p=JSON.parse(reader.result);
+        var incoming=Array.isArray(p)?p:(p.articles||[]);
+        if(!incoming.length){ toast("No articles found in that file"); return; }
+        var added=0, base=maxNum();
+        incoming.forEach(function(it){
+          if(!it.title) return;
+          base++;
+          var na=normalize({id:pad(base),num:base,title:it.title,category:it.category,tags:it.tags,body:it.body,files:it.files,created:it.created,updated:nowISO(),cited:it.cited,lastCited:it.lastCited});
+          state.articles.unshift(na); added++;
+        });
+        state.nextNum=base+1;
+        persist(); renderAll();
+        toast("Imported "+added+" articles");
+      }catch(e){ toast("That file is not valid JSON"); }
+    };
+    reader.readAsText(file);
+  }
+  /* ---- File attachments ---- */
+  var editAttachments=[];
+  function renderAttachList(){
+    var el=document.getElementById("fAttachList"); if(!el) return;
+    if(!editAttachments.length){ el.innerHTML='<div style="font-size:12px;color:var(--faint);padding:4px 0">No files attached yet.</div>'; return; }
+    el.innerHTML=editAttachments.map(function(f,i){
+      return '<div class="attach-row" data-i="'+i+'"><span class="a-icon">'+fileSVG()+'</span><span class="a-name">'+escapeHTML(f.name||fileBaseName(attachFullPath(f)))+'</span><span class="a-path">'+escapeHTML(attachFullPath(f))+'</span><button class="a-del" data-del="'+i+'" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
+    }).join("");
+    el.querySelectorAll("[data-del]").forEach(function(b){
+      b.onclick=function(){ editAttachments.splice(Number(b.getAttribute("data-del")),1); renderAttachList(); };
+    });
+  }
+  async function browseAttach(){
+    var nameEl=document.getElementById("fAttachName");
+    // Electron native picker — copies into K:\Attachments\ automatically
+    if(window.kbNative && window.kbNative.pickAttach){
+      try{
+        var result=await window.kbNative.pickAttach();
+        if(!result) return; // cancelled
+        addAttachFile(result.name, nameEl.value.trim());
+        nameEl.value="";
+        toast(result.error ? ("Attached, but copy failed: "+result.error) : "File copied to K:\\Attachments and attached");
+      }catch(e){ toast("Could not open file picker: "+e.message); }
+      return;
+    }
+    // Browser: pick files and copy their bytes into the Attachments folder
+    if(window.showOpenFilePicker){
+      try{
+        var handles=await window.showOpenFilePicker({ multiple:true });
+        if(!handles||!handles.length) return;
+        var picked=[];
+        for(var i=0;i<handles.length;i++){ picked.push(await handles[i].getFile()); }
+        await copyFilesToAttachments(picked);
+        nameEl.value="";
+      }catch(e){ if(e.name!=="AbortError") toast("Could not open file picker: "+e.message); }
+      return;
+    }
+    var inp=document.getElementById("attachFileInput");
+    if(inp) inp.click();
+  }
+  function setupAttachDrop(){
+    var zone=document.getElementById("fAttachDrop"); if(!zone) return;
+    ["dragenter","dragover"].forEach(function(ev){
+      zone.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); zone.classList.add("drag"); });
+    });
+    ["dragleave","dragend"].forEach(function(ev){
+      zone.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); zone.classList.remove("drag"); });
+    });
+    zone.addEventListener("drop", async function(e){
+      e.preventDefault(); e.stopPropagation(); zone.classList.remove("drag");
+      var dt=e.dataTransfer;
+      var fileList=dt && dt.files ? Array.prototype.slice.call(dt.files) : [];
+      if(!fileList.length) return;
+      // Electron: dropped files expose a real .path, so copy via the native bridge
+      if(window.kbNative && window.kbNative.copyAttach){
+        var ok=0, fail=0;
+        for(var i=0;i<fileList.length;i++){
+          var p=fileList[i].path;
+          if(!p){ addAttachFile(fileList[i].name, ""); ok++; continue; }
+          try{ var r=await window.kbNative.copyAttach(p); addAttachFile(r.name, ""); ok++; }
+          catch(err){ fail++; }
+        }
+        toast(ok+" file"+(ok===1?"":"s")+" copied to K:\\Attachments"+(fail?(", "+fail+" failed"):""));
+        return;
+      }
+      // Browser: copy the dropped file bytes into the Attachments folder
+      await copyFilesToAttachments(fileList);
+    });
+    var inp=document.getElementById("attachFileInput");
+    if(inp){ inp.addEventListener("change", async function(e){
+      var files=Array.prototype.slice.call(e.target.files||[]);
+      if(files.length) await copyFilesToAttachments(files);
+      e.target.value="";
+    }); }
+  }
+
+  // ---- Browser: write picked/dropped File objects into the Attachments folder ----
+  var attachDirHandle=null; // remembered for the session once granted
+  async function getAttachDirHandle(){
+    if(attachDirHandle) return attachDirHandle;
+    // Try to reuse a stored handle from IndexedDB
+    try{ var saved=await idbGet("attachDir"); if(saved){ var perm=await saved.queryPermission({mode:"readwrite"}); if(perm==="granted"){ attachDirHandle=saved; return saved; } } }catch(e){}
+    if(!window.showDirectoryPicker) return null;
+    try{
+      var dir=await window.showDirectoryPicker({ id:"odkb-attachments", mode:"readwrite" });
+      attachDirHandle=dir;
+      try{ idbSet("attachDir", dir); }catch(e){}
+      updateAttachLive();
+      return dir;
+    }catch(e){ return null; }
+  }
+  async function copyFilesToAttachments(fileObjs){
+    if(!fileObjs||!fileObjs.length) return;
+    var dir=await getAttachDirHandle();
+    if(!dir){
+      // No folder access — just record the names and tell the user to place them.
+      fileObjs.forEach(function(f){ addAttachFile(f.name, ""); });
+      toast("Attached by name. Place the file"+(fileObjs.length===1?"":"s")+" in K:\\Attachments so "+(fileObjs.length===1?"it":"they")+" can be opened.");
+      return;
+    }
+    var ok=0, fail=0;
+    for(var i=0;i<fileObjs.length;i++){
+      var f=fileObjs[i];
+      try{
+        var fh=await dir.getFileHandle(f.name, { create:true });
+        var w=await fh.createWritable();
+        await w.write(f); await w.close();
+        addAttachFile(f.name, ""); ok++;
+      }catch(e){ fail++; }
+    }
+    toast(ok+" file"+(ok===1?"":"s")+" copied to Attachments"+(fail?(", "+fail+" failed"):""));
+  }
+
+  // Add an attachment from a chosen file. We store only the file name; the
+  // full path is always ATTACH_DIR + name so editors never type a folder.
+  function addAttachFile(fileName, displayName){
+    var base=fileBaseName(fileName);
+    if(!base) return;
+    var name=(displayName||"").trim() || base.replace(/\.[^.]+$/,"").replace(/[-_]/g," ");
+    editAttachments.push({ name:name, file:base });
+    renderAttachList();
+  }
+  // Manual add: user types just a file name.
+  function addAttachment(){
+    var fileEl=document.getElementById("fAttachPath");
+    var nameEl=document.getElementById("fAttachName");
+    var entered=(fileEl.value||"").trim();
+    if(!entered){ toast("Enter a file name first, or use Browse"); fileEl.focus(); return; }
+    addAttachFile(entered, nameEl.value.trim());
+    fileEl.value=""; nameEl.value=""; fileEl.focus();
+  }
+  function copyArticle(a){
+    var text=a.title+"\n\n"+htmlToPlain(a.body);
+    var html="<h2>"+escapeHTML(a.title)+"</h2>"+a.body;
+    if(navigator.clipboard && window.ClipboardItem){
+      try{
+        navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([text],{type:"text/plain"})})])
+          .then(function(){toast("Article copied to clipboard");},function(){copyText(text,"Article copied to clipboard");});
+        return;
+      }catch(e){}
+    }
+    copyText(text,"Article copied to clipboard");
+  }
+  function copyText(text,msg){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){toast(msg||"Copied");},fallback);
+    }else fallback();
+    function fallback(){
+      var ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+      document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(e){} document.body.removeChild(ta);
+      toast(msg||"Copied");
+    }
+  }
+
+  /* ---- Modals + toast ---- */
+  function show(id,focusId){ document.getElementById(id).classList.add("show"); if(focusId) setTimeout(function(){var f=document.getElementById(focusId); if(f) f.focus();},60); }
+  function hide(id){ document.getElementById(id).classList.remove("show"); }
+  function anyOpen(){ return !!document.querySelector(".overlay.show"); }
+  function closeAll(){ document.querySelectorAll(".overlay.show").forEach(function(o){ if(o.id!=="reconnectOverlay") o.classList.remove("show"); }); }
+  function toast(msg){
+    var wrap=document.getElementById("toasts");
+    var t=document.createElement("div"); t.className="toast";
+    t.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'+escapeHTML(msg);
+    wrap.appendChild(t);
+    setTimeout(function(){ t.style.transition="opacity .3s,transform .3s"; t.style.opacity="0"; t.style.transform="translateY(8px)"; setTimeout(function(){t.remove();},300); },2800);
+  }
+
+  /* ---- Theme ---- */
+  var SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  var MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  function isDark(){ return document.documentElement.classList.contains("theme-dark"); }
+  function updateThemeIcon(){
+    var b=document.getElementById("btnTheme");
+    b.innerHTML = isDark() ? SUN : MOON;
+    b.title = isDark() ? "Switch to light mode" : "Switch to dark mode";
+  }
+  function applyTheme(mode){
+    document.documentElement.classList.toggle("theme-dark", mode==="dark");
+    updateThemeIcon();
+  }
+  function toggleTheme(){
+    var next = isDark() ? "light" : "dark";
+    applyTheme(next);
+    idbSet("theme", next);
+    toast(next==="dark" ? "Dark mode on" : "Light mode on");
+  }
+
+  function updateLive(){
+    var dot=document.getElementById("liveDot"), lbl=document.getElementById("liveLabel"), btn=document.getElementById("liveStatus");
+    var shared = (storageMode==="native"||storageMode==="file");
+    dot.className="live-dot "+(storageMode==="native"?"file":storageMode);
+    lbl.textContent = shared ? "Shared library" : (storageMode==="browser" ? "On this device only" : "Not saving");
+    if(btn){ btn.classList.toggle("warn", !shared); btn.title = shared ? "Connected to the shared library. Click for details." : "You are NOT on the shared library, so your changes and attachments will not reach other users. Click to fix."; }
+    updateAttachLive();
+  }
+  async function updateAttachLive(){
+    var dot=document.getElementById("attachDot"), lbl=document.getElementById("attachLabel"), btn=document.getElementById("attachStatus");
+    if(!dot||!lbl||!btn) return;
+    // Desktop app copies into K:\Attachments automatically
+    if(window.kbNative && window.kbNative.copyAttach){
+      dot.className="live-dot file"; lbl.textContent="Attachments ready"; btn.classList.remove("warn");
+      btn.title="Files are copied to K:\\Attachments automatically. Click for details.";
+      return;
+    }
+    // Browser: depends on whether the Attachments folder is connected
+    var granted=false;
+    try{ var h=await idbGet("attachDir"); if(h){ var p=await h.queryPermission({mode:"readwrite"}); granted=(p==="granted"); } }catch(e){}
+    if(granted){
+      dot.className="live-dot file"; lbl.textContent="Attachments ready"; btn.classList.remove("warn");
+      btn.title="Connected to K:\\Attachments. Dropped files are copied there. Click for details.";
+    }else{
+      dot.className="live-dot memory"; lbl.textContent="Attachments not set"; btn.classList.add("warn");
+      btn.title="The K:\\Attachments folder is not connected, so files you add will not reach other users. Click to fix.";
+    }
+  }
+
+  /* ---- Seed sample content (rich) ---- */
+  function seedData(){
+    var t=nowISO();
+    function mk(n,title,cat,tags,html,cited,ratings){ return normalize({id:pad(n),num:n,title:title,category:cat,tags:tags,body:html,created:t,updated:t,cited:cited||0,lastCited:cited?t:null,ratings:ratings||{}}); }
+    return [
+      mk(1,"Reset an Active Directory password","Accounts",["password","AD","login"],
+"<p>Use this when a user is locked out or has forgotten their network password.</p><ol><li>Open <b>Active Directory Users and Computers</b>.</li><li>Search for the user by name or username.</li><li>Right click the account and choose <b>Reset Password</b>.</li><li>Set a temporary password and tick <i>User must change password at next logon</i>.</li><li>If the account is locked, open the <b>Account</b> tab and clear the lockout.</li><li>Confirm the user can sign in and is prompted to set a new password.</li></ol><blockquote>If the account keeps locking, check for old saved credentials on a phone, a mapped drive, or a second signed in device.</blockquote>",3,{s1:5,s2:5,s3:4,s4:5}),
+      mk(2,"Connect to the company VPN (GlobalProtect)","Network",["vpn","remote","globalprotect"],
+"<p>Steps to get a remote user connected to the corporate network.</p><ol><li>Confirm GlobalProtect is installed. If not, install it from <b>Software Center</b>.</li><li>Launch GlobalProtect and enter the portal address: <code>vpn.company.com</code></li><li>Sign in with the network username and password, then approve the MFA prompt.</li><li>Wait for the status to show <b>Connected</b>.</li></ol><h3>Common fixes</h3><ul><li>If sign in fails, confirm the password works on the webmail portal first.</li><li>If it connects then drops, switch from Wi-Fi to a wired connection to test.</li><li>Clear the saved portal and re-add <code>vpn.company.com</code> if the client hangs on Connecting.</li></ul>",5,{s1:5,s2:4,s3:5,s4:4,s5:5}),
+      mk(3,"Add a shared network printer by name","Hardware",["printer","driver","print"],
+"<p>Use when a user needs a printer published on the print server.</p><ol><li>Press <b>Windows + R</b>, then type the print server path: <code>\\\\printsrv01</code></li><li>Find the printer by its location code in the list.</li><li>Double click the printer to install the driver automatically.</li><li>Print a test page to confirm.</li></ol><p>If the driver fails to install, the user likely lacks local admin rights. Push the printer through the deployment group in <b>Print Management</b> instead.</p>",1,{s1:3,s2:4})
+    ];
+  }
+
+  /* =========================================================
+     Wire up
+  ========================================================= */
+  /* ---- Resizable panes + layout (side by side or stacked), saved per device ---- */
+  function isRows(){ return document.getElementById("app").classList.contains("layout-rows"); }
+  function setListRatio(r){ r=Math.max(0.16, Math.min(0.6, r)); document.documentElement.style.setProperty("--list-ratio", r.toFixed(4)); return r; }
+  function setListRatioV(r){ r=Math.max(0.18, Math.min(0.7, r)); document.documentElement.style.setProperty("--list-ratio-v", r.toFixed(4)); return r; }
+  function setupResizer(){
+    var rez=document.getElementById("resizer"); if(!rez) return;
+    function bodyEl(){ return document.querySelector(".body"); }
+    function move(e){
+      if(isRows()){ var b=bodyEl().getBoundingClientRect(); setListRatioV((e.clientY - b.top) / b.height); }
+      else { setListRatio(e.clientX / window.innerWidth); }
+    }
+    function up(){
+      document.body.classList.remove("resizing","res-rows");
+      window.removeEventListener("pointermove", move);
+      if(isRows()){
+        var b=bodyEl().getBoundingClientRect();
+        var h=document.querySelector(".list-pane").getBoundingClientRect().height;
+        var rv=setListRatioV(h / b.height);
+        try{ idbSet("listRatioV", rv); }catch(e){}
+      } else {
+        var w=document.querySelector(".list-pane").getBoundingClientRect().width;
+        var r=setListRatio(w / window.innerWidth);
+        try{ idbSet("listRatio", r); }catch(e){}
+      }
+    }
+    rez.addEventListener("pointerdown", function(e){
+      if(window.innerWidth<=680) return; // single column on small screens
+      document.body.classList.add("resizing");
+      if(isRows()) document.body.classList.add("res-rows");
+      try{ rez.setPointerCapture(e.pointerId); }catch(_){}
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up, { once:true });
+      e.preventDefault();
+    });
+    rez.addEventListener("dblclick", function(){
+      if(isRows()){ var rv=setListRatioV(0.4); try{ idbSet("listRatioV", rv); }catch(e){} }
+      else { var r=setListRatio(0.27); try{ idbSet("listRatio", r); }catch(e){} }
+    });
+  }
+
+  function setLayout(mode){
+    var app=document.getElementById("app");
+    app.classList.toggle("layout-rows", mode==="rows");
+    try{ idbSet("layout", mode); }catch(e){}
+    updateLayoutButton();
+    positionFind();
+  }
+  function updateLayoutButton(){
+    var b=document.getElementById("btnLayout"); if(!b) return;
+    var rows=isRows();
+    var cols='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M10 4v16"/></svg>';
+    var stk='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 11h18"/></svg>';
+    b.innerHTML = rows ? cols : stk;
+    b.title = rows ? "Switch to side by side layout" : "Switch to stacked layout";
+  }
+
+  /* ---- Find within the open article ---- */
+  var findMatches=[], findIdx=-1, findTimer=null;
+  function findArticleBody(){ return document.querySelector("#reader .article-body"); }
+  function clearFind(){
+    var body=findArticleBody(); if(!body) return;
+    var marks=body.querySelectorAll("mark.find-hit");
+    if(!marks.length) return;
+    marks.forEach(function(m){ m.parentNode.replaceChild(document.createTextNode(m.textContent), m); });
+    body.normalize();
+  }
+  function updateFindCount(){
+    var el=document.getElementById("findCount"); if(!el) return;
+    var q=document.getElementById("findInput").value.trim();
+    el.textContent = !q ? "" : (findMatches.length ? (findIdx+1)+" of "+findMatches.length : "No matches");
+  }
+  function markCurrent(scroll){
+    findMatches.forEach(function(m,i){ m.classList.toggle("cur", i===findIdx); });
+    if(scroll && findMatches[findIdx]){ findMatches[findIdx].scrollIntoView({ block:"center", inline:"nearest" }); }
+    updateFindCount();
+  }
+  function applyFind(q){
+    clearFind(); findMatches=[]; findIdx=-1;
+    var body=findArticleBody(); q=(q||"").trim();
+    if(!body || !q){ updateFindCount(); return; }
+    var esc=q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    var nodes=[], w=document.createTreeWalker(body, NodeFilter.SHOW_TEXT, null), n;
+    while((n=w.nextNode())){ if(n.nodeValue && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(function(node){
+      var text=node.nodeValue, rx=new RegExp(esc,"gi"), m, last=0, frag=null;
+      while((m=rx.exec(text))){
+        if(!frag) frag=document.createDocumentFragment();
+        if(m.index>last) frag.appendChild(document.createTextNode(text.slice(last,m.index)));
+        var mk=document.createElement("mark"); mk.className="find-hit"; mk.textContent=m[0];
+        frag.appendChild(mk); findMatches.push(mk);
+        last=m.index+m[0].length;
+        if(rx.lastIndex===m.index) rx.lastIndex++;
+      }
+      if(frag){ if(last<text.length) frag.appendChild(document.createTextNode(text.slice(last))); node.parentNode.replaceChild(frag, node); }
+    });
+    if(findMatches.length){ findIdx=0; markCurrent(true); } else { updateFindCount(); }
+  }
+  function gotoFind(delta){
+    if(!findMatches.length) return;
+    findIdx=(findIdx+delta+findMatches.length)%findMatches.length;
+    markCurrent(true);
+  }
+  function positionFind(){
+    var bar=document.getElementById("findBar"), reader=document.getElementById("reader");
+    if(!bar || bar.hidden || !reader) return;
+    var r=reader.getBoundingClientRect();
+    bar.style.top=Math.max(8, r.top+10)+"px";
+    bar.style.right=Math.max(8, window.innerWidth - r.right + 14)+"px";
+  }
+  function openFind(){
+    if(!findArticleBody()) return; // no article open
+    var bar=document.getElementById("findBar"); bar.hidden=false; positionFind();
+    var inp=document.getElementById("findInput"); inp.focus(); inp.select();
+    if(inp.value.trim()) applyFind(inp.value);
+  }
+  function closeFind(){
+    clearFind(); findMatches=[]; findIdx=-1;
+    var bar=document.getElementById("findBar"); if(bar) bar.hidden=true;
+    var rd=document.getElementById("reader"); if(rd) rd.focus && rd.focus();
+  }
+  function refreshFindIfOpen(){
+    var bar=document.getElementById("findBar");
+    if(!bar || bar.hidden) return;
+    if(!findArticleBody()){ closeFind(); return; }
+    positionFind();
+    var v=document.getElementById("findInput").value;
+    if(v.trim()) applyFind(v); else { findMatches=[]; findIdx=-1; updateFindCount(); }
+  }
+
+  function bind(){
+    document.getElementById("btnNew").onclick=openNew;
+    document.getElementById("btnTheme").onclick=toggleTheme;
+    document.getElementById("btnSettings").onclick=openSettings;
+    var liveBtn=document.getElementById("liveStatus"); if(liveBtn) liveBtn.onclick=openSettings;
+    var attBtn=document.getElementById("attachStatus"); if(attBtn) attBtn.onclick=openSettings;
+    document.getElementById("btnLayout").onclick=function(){ setLayout(isRows() ? "cols" : "rows"); };
+    document.getElementById("list").addEventListener("click", function(e){
+      var fav=e.target.closest ? e.target.closest(".card-fav") : null;
+      if(fav){ e.stopPropagation(); toggleFav(fav.getAttribute("data-fav")); return; }
+      var card=e.target.closest ? e.target.closest(".card") : null;
+      if(card){ select(card.getAttribute("data-id")); }
+    });
+    setupResizer();
+    var findInput=document.getElementById("findInput");
+    findInput.addEventListener("input", function(){ clearTimeout(findTimer); findTimer=setTimeout(function(){ applyFind(findInput.value); }, 70); });
+    findInput.addEventListener("keydown", function(e){
+      if(e.key==="Enter"){ e.preventDefault(); e.stopPropagation(); gotoFind(e.shiftKey?-1:1); }
+      else if(e.key==="Escape"){ e.preventDefault(); e.stopPropagation(); closeFind(); }
+    });
+    document.getElementById("findNext").onclick=function(){ gotoFind(1); findInput.focus(); };
+    document.getElementById("findPrev").onclick=function(){ gotoFind(-1); findInput.focus(); };
+    document.getElementById("findClose").onclick=closeFind;
+    window.addEventListener("resize", positionFind);
+    var search=document.getElementById("search");
+    var searchWrap=document.querySelector(".search-wrap");
+    var searchClear=document.getElementById("searchClear");
+    var searchTimer=null;
+    function updateClear(){ searchWrap.classList.toggle("has-text", !!search.value); }
+    function runSearch(){ state.query=search.value; renderList(); }
+    search.oninput=function(){ updateClear(); clearTimeout(searchTimer); searchTimer=setTimeout(runSearch, 55); };
+    searchClear.onclick=function(){ search.value=""; state.query=""; updateClear(); renderList(); search.focus(); };
+    document.getElementById("sort").onchange=function(e){ state.sortKey=e.target.value; renderList(); };
+
+    // Category bar scrolling: mouse wheel scrolls sideways, arrows nudge, edges show when there's more
+    var filters=document.getElementById("filters");
+    filters.addEventListener("wheel", function(e){
+      if(Math.abs(e.deltaY) > Math.abs(e.deltaX)){ filters.scrollLeft += e.deltaY; e.preventDefault(); }
+    }, {passive:false});
+    filters.addEventListener("scroll", updateFilterArrows);
+    document.getElementById("filLeft").onclick=function(){ scrollFilters(-1); };
+    document.getElementById("filRight").onclick=function(){ scrollFilters(1); };
+    window.addEventListener("resize", updateFilterArrows);
+    document.getElementById("saveArticle").onclick=saveArticle;
+    document.getElementById("pickerSearch").oninput=function(e){ renderPicker(e.target.value); };
+    document.getElementById("copyCite").onclick=doCopyCite;
+    document.getElementById("citeTmpl").oninput=refreshCitePreview;
+    document.getElementById("optBody").onchange=refreshCitePreview;
+    document.getElementById("setTmpl").onchange=saveSettingsTemplate;
+    document.getElementById("setTmpl").onblur=saveSettingsTemplate;
+    document.getElementById("btnExport").onclick=exportData;
+    document.getElementById("btnImport").onclick=function(){ document.getElementById("fileInput").click(); };
+    document.getElementById("btnBrowseAttach").onclick=browseAttach;
+    setupAttachDrop();
+    // Stop the window from navigating away if a file is dropped outside the drop zone
+    window.addEventListener("dragover", function(e){ e.preventDefault(); }, false);
+    window.addEventListener("drop", function(e){
+      if(!e.target.closest || !e.target.closest("#fAttachDrop")){ e.preventDefault(); }
+    }, false);
+    document.getElementById("btnAddAttach").onclick=addAttachment;
+    document.getElementById("fAttachPath").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); addAttachment(); } });
+    document.getElementById("fileInput").onchange=function(e){ if(e.target.files[0]){ importData(e.target.files[0]); e.target.value=""; } };
+    document.querySelectorAll("[data-close]").forEach(function(b){ b.onclick=closeAll; });
+    document.querySelectorAll(".overlay").forEach(function(o){ o.addEventListener("mousedown",function(e){ if(e.target===o && o.id!=="reconnectOverlay") closeAll(); }); });
+    document.getElementById("reconnectNow").onclick=reconnectNow;
+    document.getElementById("reconnectOther").onclick=chooseDifferentFile;
+    document.getElementById("reconnectDevice").onclick=useDeviceInstead;
+
+    // Click an internal article link to jump to it; click an image to view it full size
+    document.getElementById("reader").addEventListener("click", function(e){
+      var kb=e.target.closest ? e.target.closest("a.kb-link") : null;
+      if(kb && e.target.closest(".article-body")){
+        e.preventDefault();
+        var id=kb.getAttribute("data-kb");
+        if(state.articles.find(function(a){return a.id===id;})) select(id);
+        else toast("That linked article was not found. It may have been deleted.");
+        return;
+      }
+      if(e.target.tagName==="IMG" && e.target.closest(".article-body")){
+        var lb=document.getElementById("lightbox");
+        document.getElementById("lightboxImg").src=e.target.src;
+        lb.classList.add("show");
+      }
+    });
+    document.getElementById("lightbox").addEventListener("click", function(){ this.classList.remove("show"); document.getElementById("lightboxImg").src=""; });
+    bindEditor();
+    document.addEventListener("keydown",function(e){
+      var typing=/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)||document.activeElement.isContentEditable;
+      if(e.key==="Escape"){
+        if(document.activeElement===search && search.value){ search.value=""; state.query=""; updateClear(); renderList(); return; }
+        closeAll(); var lb=document.getElementById("lightbox"); if(lb.classList.contains("show")){ lb.classList.remove("show"); document.getElementById("lightboxImg").src=""; }
+      }
+      if((e.metaKey||e.ctrlKey) && (e.key==="f"||e.key==="F") && !e.shiftKey){
+        if(findArticleBody()){ e.preventDefault(); openFind(); }
+      }
+      if(e.key==="/" && !typing){ e.preventDefault(); search.focus(); search.select(); }
+      if((e.key==="n"||e.key==="N") && !typing && !anyOpen() && canEdit()){ e.preventDefault(); openNew(); }
+      if((e.metaKey||e.ctrlKey) && e.key==="Enter" && document.getElementById("editorOverlay").classList.contains("show")){ saveArticle(); }
+    });
+  }
+
+  (async function init(){
+    bind();
+    var savedTheme = await idbGet("theme");
+    if(savedTheme==="dark"||savedTheme==="light") applyTheme(savedTheme); else updateThemeIcon();
+    analystId = await idbGet("analystId");
+    if(!analystId){ analystId = "a-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,8); idbSet("analystId", analystId); }
+    try{ var favArr = await idbGet("favorites"); if(Array.isArray(favArr)) favorites = new Set(favArr); }catch(e){}
+    try{ var lr = await idbGet("listRatio"); if(typeof lr==="number") setListRatio(lr); }catch(e){}
+    try{ var lrv = await idbGet("listRatioV"); if(typeof lrv==="number") setListRatioV(lrv); }catch(e){}
+    try{ var lay = await idbGet("layout"); document.getElementById("app").classList.toggle("layout-rows", lay==="rows"); }catch(e){}
+    updateLayoutButton();
+    var loaded=false;
+    if(hasNative){
+      storageMode="native";
+      var hasPath = await window.kbNative.getPath();
+      if(hasPath){
+        await nativeLoad();
+        if(!readOnlyFile && state.articles.length===0){ state.articles=seedData(); state.nextNum=4; persist(); }
+      }
+      loaded=true; // never seed into thin air; if no file chosen yet the user picks one in Settings
+      updateLive(); renderAll();
+      if(!hasPath){ toast("Choose a shared library file in Settings to begin"); openSettings(); }
+      return;
+    }
+    if(await tryReconnect()) loaded=true;            // shared file, permission already granted
+    else if(pendingHandle){                          // remembered file needs a click to restore
+      updateLive(); renderAll();
+      showReconnectPrompt();
+      return;
+    }
+    else if(await browserLoad()){ storageMode="browser"; loaded=true; }
+    if(!loaded || state.articles.length===0){
+      if(state.articles.length===0){ state.articles=seedData(); state.nextNum=4; persist(); }
+    }
+    updateLive(); renderAll();
+    if(storageMode==="memory" && !FSA && !hasBrowserStore){ toast("Saving is unavailable here, so changes will not persist"); }
+  })();
+
+})();
+</script>
