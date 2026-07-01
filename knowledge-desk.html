@@ -787,15 +787,47 @@
   function payloadString(){
     return JSON.stringify({ app:"OD KnowledgeDesk", version:2, articles:state.articles, nextNum:state.nextNum, settings:state.settings });
   }
+  function safeParse(txt){ try{ return typeof txt==="string" ? JSON.parse(txt) : txt; }catch(e){ return null; } }
+  function pruneArtCache(){ var ids={}; state.articles.forEach(function(a){ ids[a.id]=1; }); for(var k in artCache){ if(!ids[k]) delete artCache[k]; } }
+
+  // Track what THIS user changed since the last successful save/load, so a save
+  // can be merged into whatever is currently on disk instead of overwriting the
+  // whole file. This lets two people edit different articles at the same time
+  // without clobbering each other.
+  var dirtyIds={}, deletedIds={}, settingsDirty=false;
+  function markDirty(id){ if(id){ dirtyIds[id]=true; delete deletedIds[id]; } }
+  function markDeleted(id){ if(id){ deletedIds[id]=true; delete dirtyIds[id]; } }
+
+  // Build the object to write by merging our local changes (captured in the
+  // snapshot sets) into the current on-disk contents. Disk articles are kept
+  // unless we changed or deleted them.
+  function buildMergedPayload(diskTxt, dirtySet, deletedSet, useLocalSettings){
+    var disk = safeParse(diskTxt);
+    var diskArr = disk ? (Array.isArray(disk) ? disk : (disk.articles||[])) : null;
+    if(!diskArr || !diskArr.length){
+      return { app:"OD KnowledgeDesk", version:2, articles:state.articles, nextNum:state.nextNum, settings:state.settings };
+    }
+    var local={}; state.articles.forEach(function(a){ local[a.id]=a; });
+    var map={};
+    diskArr.forEach(function(a){ if(a && a.id) map[a.id]=a; });
+    Object.keys(dirtySet).forEach(function(id){ if(local[id]) map[id]=local[id]; }); // our edits/creates win
+    Object.keys(deletedSet).forEach(function(id){ delete map[id]; });                 // our deletions removed
+    var merged=Object.keys(map).map(function(k){ return map[k]; });
+    merged.sort(function(x,y){ return (x.num||0)-(y.num||0); });
+    var diskNext = (disk && disk.nextNum) ? disk.nextNum : 1;
+    var nextNum = Math.max(state.nextNum||1, diskNext, merged.reduce(function(m,a){ return Math.max(m,(a.num||0)+1); },1));
+    var settings = useLocalSettings ? state.settings : ((disk && disk.settings) ? disk.settings : state.settings);
+    return { app:"OD KnowledgeDesk", version:2, articles:merged, nextNum:nextNum, settings:settings };
+  }
   function applyPayload(txt){
     try{
       var p = typeof txt==="string" ? JSON.parse(txt) : txt;
       var arr = Array.isArray(p) ? p : (p.articles||[]);
-      state.articles = arr.map(normalize);
+      state.articles = arr.map(function(a){ return normalize(a); }); // trust file contents (already sanitized when written)
       state.nextNum = (p && p.nextNum) ? p.nextNum : (maxNum()+1);
       if(p && p.settings && p.settings.template) state.settings = p.settings;
-      var ids={}; state.articles.forEach(function(a){ ids[a.id]=1; });
-      for(var k in artCache){ if(!ids[k]) delete artCache[k]; }
+      dirtyIds={}; deletedIds={}; settingsDirty=false;
+      pruneArtCache();
       return true;
     }catch(e){ return false; }
   }
@@ -835,12 +867,24 @@
     if(!fileHandle){ return; }
     if(saving){ saveQueued = true; return; }
     saving = true;
+    var dsnap = Object.assign({}, dirtyIds);
+    var delsnap = Object.assign({}, deletedIds);
+    var setsnap = settingsDirty;
     try{
+      var cur = await fileHandle.getFile();
+      var diskTxt = await cur.text();
+      var obj = buildMergedPayload(diskTxt, dsnap, delsnap, setsnap);
       var w = await fileHandle.createWritable();
-      await w.write(payloadString());
+      await w.write(JSON.stringify(obj));
       await w.close();
       var f = await fileHandle.getFile();
       lastFileModified = f.lastModified;
+      state.nextNum = Math.max(state.nextNum||1, obj.nextNum||1);
+      // Clear only the flags we actually persisted; anything changed during the
+      // write stays marked and is written by the queued save.
+      Object.keys(dsnap).forEach(function(id){ delete dirtyIds[id]; });
+      Object.keys(delsnap).forEach(function(id){ delete deletedIds[id]; });
+      if(setsnap) settingsDirty=false;
     }catch(e){ readOnlyFile=true; applyGate(); renderReader(); toast("The shared file is read only for you. Your changes were not saved."); }
     saving = false;
     if(saveQueued){ saveQueued=false; fileSave(); }
@@ -922,9 +966,10 @@
   var watchTimer = null;
   function startWatch(){ stopWatch(); window.addEventListener("focus", checkFile); watchTimer = setInterval(checkFile, 15000); }
   function stopWatch(){ if(watchTimer) clearInterval(watchTimer); watchTimer=null; window.removeEventListener("focus", checkFile); }
+  function hasPending(){ for(var k in dirtyIds) return true; for(var d in deletedIds) return true; return settingsDirty; }
   async function checkFile(){
     if(storageMode!=="file" || !fileHandle || saving) return;
-    if(anyOpen()) return; // do not reload while the user is editing
+    if(anyOpen() || hasPending()) return; // do not reload while editing or with unsaved local changes
     try{
       var f = await fileHandle.getFile();
       if(f.lastModified > lastFileModified){
@@ -951,7 +996,7 @@
     }catch(e){ return false; }
   }
   async function nativeReload(){
-    if(anyOpen() || saving) return;
+    if(anyOpen() || saving || hasPending()) return;
     try{
       var txt = await window.kbNative.read();
       if(txt){ var keep=state.selectedId; applyPayload(txt); if(!state.articles.find(function(a){return a.id===keep;})) state.selectedId=null; renderAll(); toast("Library refreshed with the latest changes"); }
@@ -960,7 +1005,18 @@
   async function nativeSave(){
     if(saving){ saveQueued=true; return; }
     saving=true;
-    try{ await window.kbNative.write(payloadString()); }
+    var dsnap = Object.assign({}, dirtyIds);
+    var delsnap = Object.assign({}, deletedIds);
+    var setsnap = settingsDirty;
+    try{
+      var diskTxt = await window.kbNative.read();
+      var obj = buildMergedPayload(diskTxt, dsnap, delsnap, setsnap);
+      await window.kbNative.write(JSON.stringify(obj));
+      state.nextNum = Math.max(state.nextNum||1, obj.nextNum||1);
+      Object.keys(dsnap).forEach(function(id){ delete dirtyIds[id]; });
+      Object.keys(delsnap).forEach(function(id){ delete deletedIds[id]; });
+      if(setsnap) settingsDirty=false;
+    }
     catch(e){ readOnlyFile=true; applyGate(); renderReader(); toast("The shared library is read only for you. Your changes were not saved."); }
     saving=false;
     if(saveQueued){ saveQueued=false; nativeSave(); }
@@ -1122,17 +1178,18 @@
     }
   }
 
-  function normalize(a){
+  function normalize(a, sanitize){
     a = a || {};
     var body = a.body || "";
     if(!isHTML(body)) body = plainToHTML(body);
+    else if(sanitize) body = sanitizeKeepLinks(body);
     return {
       id: a.id || pad(a.num||0),
       num: a.num || 0,
       title: a.title || "Untitled",
       category: a.category || "",
       tags: Array.isArray(a.tags) ? a.tags : (a.tags ? String(a.tags).split(",").map(function(s){return s.trim();}).filter(Boolean) : []),
-      body: sanitizeKeepLinks(body),
+      body: body,
       created: a.created || nowISO(),
       updated: a.updated || nowISO(),
       cited: a.cited || 0,
@@ -1194,7 +1251,7 @@
     var a=state.articles.find(function(x){return x.id===id;}); if(!a) return;
     if(!a.ratings) a.ratings={};
     if(stars===0) delete a.ratings[analystId]; else a.ratings[analystId]=stars;
-    a.ratingUpdated=nowISO();
+    a.ratingUpdated=nowISO(); markDirty(a.id);
     persist(); renderList(); renderReader();
   }
   function relevance(a, terms){
@@ -1672,14 +1729,16 @@
     if(editingId){
       var a=state.articles.find(function(x){return x.id===editingId;});
       a.title=title; a.category=cat; a.tags=tags; a.body=bodyHTML; a.files=editAttachments.slice(); a.updated=nowISO();
-      state.selectedId=a.id; toast("Article updated");
+      state.selectedId=a.id; markDirty(a.id); toast("Article updated");
     }else{
       var num=maxNum()+1;
       var na={id:pad(num),num:num,title:title,category:cat,tags:tags,body:bodyHTML,files:editAttachments.slice(),created:nowISO(),updated:nowISO(),cited:0,lastCited:null};
-      state.nextNum=num+1; state.articles.unshift(na); state.selectedId=na.id; toast("Article "+na.id+" added");
+      state.nextNum=num+1; state.articles.unshift(na); state.selectedId=na.id; markDirty(na.id); toast("Article "+na.id+" added");
     }
-    persist(); hide("editorOverlay"); renderAll();
+    hide("editorOverlay");
     document.getElementById("app").classList.add("reading");
+    persist();
+    requestAnimationFrame(renderAll);
   }
   function delArticle(a){
     if(!confirm("Delete "+a.id+' "'+a.title+'"? This cannot be undone.')) return;
@@ -1687,8 +1746,10 @@
     delete artCache[a.id];
     navStack=navStack.filter(function(x){return x.id!==a.id;});
     if(state.selectedId===a.id) state.selectedId=null;
-    persist(); renderAll();
+    markDeleted(a.id);
     document.getElementById("app").classList.remove("reading");
+    persist();
+    requestAnimationFrame(renderAll);
     toast("Article deleted");
   }
 
@@ -1717,7 +1778,7 @@
     var text=buildCite(citeArticle,document.getElementById("citeTmpl").value,document.getElementById("optBody").checked);
     copyText(text,"Resolution copied. Paste it into Cherwell.");
     if(document.getElementById("optCount").checked){
-      citeArticle.cited=(citeArticle.cited||0)+1; citeArticle.lastCited=nowISO();
+      citeArticle.cited=(citeArticle.cited||0)+1; citeArticle.lastCited=nowISO(); markDirty(citeArticle.id);
       persist(); renderList(); renderReader();
     }
     hide("citeOverlay");
@@ -1833,7 +1894,7 @@
   }
   function saveSettingsTemplate(){
     var t=document.getElementById("setTmpl").value.trim();
-    if(t){ state.settings.template=t; persist(); }
+    if(t){ state.settings.template=t; settingsDirty=true; persist(); }
   }
   function exportData(){
     var blob=new Blob([JSON.stringify({app:"OD KnowledgeDesk",exportedAt:nowISO(),version:2,articles:state.articles,nextNum:state.nextNum,settings:state.settings},null,2)],{type:"application/json"});
@@ -1852,8 +1913,8 @@
         incoming.forEach(function(it){
           if(!it.title) return;
           base++;
-          var na=normalize({id:pad(base),num:base,title:it.title,category:it.category,tags:it.tags,body:it.body,files:it.files,created:it.created,updated:nowISO(),cited:it.cited,lastCited:it.lastCited});
-          state.articles.unshift(na); added++;
+          var na=normalize({id:pad(base),num:base,title:it.title,category:it.category,tags:it.tags,body:it.body,files:it.files,created:it.created,updated:nowISO(),cited:it.cited,lastCited:it.lastCited}, true);
+          state.articles.unshift(na); markDirty(na.id); added++;
         });
         state.nextNum=base+1;
         persist(); renderAll();
